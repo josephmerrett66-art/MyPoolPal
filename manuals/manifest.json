@@ -1,0 +1,509 @@
+{
+ "version": 1,
+ "build": 1781342941,
+ "embedModel": "text-embedding-3-small",
+ "embedDimensions": 512,
+ "manuals": [
+  {
+   "id": "astral-eq-chlorinator",
+   "name": "Astral Viron eQuilibrium Chlorinator",
+   "brand": "Astral",
+   "model": "EQ25 / EQ35 / EQ45",
+   "type": "Salt chlorinator",
+   "file": "manuals/astral-eq-chlorinator.json",
+   "terms": [
+    "acid",
+    "astral",
+    "chlorinator",
+    "dosing",
+    "e-quilibrium",
+    "eq25",
+    "eq35",
+    "eq45",
+    "equilibrium",
+    "ph",
+    "salt",
+    "viron"
+   ],
+   "pdf": "manuals/pdf/astral-eq-chlorinator.pdf"
+  },
+  {
+   "id": "astral-halo-chlor",
+   "name": "AstralPool Halo Chlor Chlorinator",
+   "brand": "Astral",
+   "model": "Halo Chlor",
+   "type": "Salt chlorinator",
+   "file": "manuals/astral-halo-chlor.json",
+   "terms": [
+    "app",
+    "astral",
+    "astralpool",
+    "chlor",
+    "chlorinator",
+    "halo",
+    "salt",
+    "wifi"
+   ],
+   "pdf": "manuals/pdf/astral-halo-chlor.pdf"
+  },
+  {
+   "id": "astral-halo-hub",
+   "name": "AstralPool Halo Hub Automation",
+   "brand": "Astral",
+   "model": "Halo Hub",
+   "type": "Pool controller automation",
+   "file": "manuals/astral-halo-hub.json",
+   "terms": [
+    "astral",
+    "astralpool",
+    "automation",
+    "controller",
+    "halo",
+    "heating",
+    "hub",
+    "lights",
+    "pool"
+   ],
+   "pdf": "manuals/pdf/astral-halo-hub.pdf"
+  },
+  {
+   "id": "astral-heat-pump",
+   "name": "AstralPool Residential Heat Pump",
+   "brand": "Astral",
+   "model": "INST 430 series",
+   "type": "Heat pump",
+   "file": "manuals/astral-heat-pump.json",
+   "terms": [
+    "430",
+    "astral",
+    "astralpool",
+    "heat",
+    "heater",
+    "heating",
+    "inst",
+    "pump",
+    "residential"
+   ],
+   "pdf": "manuals/pdf/astral-heat-pump.pdf"
+  },
+  {
+   "id": "astral-viron-chlorinator",
+   "name": "Astral Viron Salt Chlorinator (Bluetooth)",
+   "brand": "Astral",
+   "model": "V25 / V35 / V45",
+   "type": "Salt chlorinator",
+   "file": "manuals/astral-viron-chlorinator.json",
+   "terms": [
+    "astral",
+    "astralpool",
+    "bluetooth",
+    "chlorinator",
+    "salt",
+    "v25",
+    "v35",
+    "v45",
+    "viron"
+   ],
+   "pdf": "manuals/pdf/astral-viron-chlorinator.pdf"
+  },
+  {
+   "id": "astral-viron-connect10",
+   "name": "AstralPool Viron Connect 10 Controller",
+   "brand": "Astral",
+   "model": "Connect 10",
+   "type": "Pool controller automation",
+   "file": "manuals/astral-viron-connect10.json",
+   "terms": [
+    "10",
+    "astral",
+    "astralpool",
+    "automation",
+    "connect",
+    "controller",
+    "lighting",
+    "pool",
+    "spa",
+    "valves",
+    "viron"
+   ],
+   "pdf": "manuals/pdf/astral-viron-connect10.pdf"
+  },
+  {
+   "id": "astral-viron-xt-pump",
+   "name": "Astral Viron XT Variable Speed Pump",
+   "brand": "Astral",
+   "model": "P280 XT / P320 XT / P600 XT",
+   "type": "Pool pump",
+   "file": "manuals/astral-viron-xt-pump.json",
+   "terms": [
+    "astral",
+    "astralpool",
+    "p280",
+    "p320",
+    "p600",
+    "pool",
+    "priming",
+    "pump",
+    "speed",
+    "variable",
+    "viron",
+    "xt"
+   ],
+   "pdf": "manuals/pdf/astral-viron-xt-pump.pdf"
+  },
+  {
+   "id": "astral-zx-cartridge-filter",
+   "name": "AstralPool ZX Series Cartridge Filter",
+   "brand": "Astral",
+   "model": "ZX series",
+   "type": "Cartridge filter",
+   "file": "manuals/astral-zx-cartridge-filter.json",
+   "terms": [
+    "astral",
+    "astralpool",
+    "cartridge",
+    "element",
+    "filter",
+    "hurlcon",
+    "zx"
+   ],
+   "pdf": "manuals/pdf/astral-zx-cartridge-filter.pdf"
+  },
+  {
+   "id": "davey-ecosalt-chlorinator",
+   "name": "Davey EcoSalt Chlorinator",
+   "brand": "Davey",
+   "model": "EcoSalt",
+   "type": "Salt chlorinator",
+   "file": "manuals/davey-ecosalt-chlorinator.json",
+   "terms": [
+    "chlorinator",
+    "davey",
+    "ecosalt",
+    "salt"
+   ],
+   "pdf": "manuals/pdf/davey-ecosalt-chlorinator.pdf"
+  },
+  {
+   "id": "davey-ecosalt2-chlorinator",
+   "name": "Davey EcoSalt 2 Chlorinator",
+   "brand": "Davey",
+   "model": "EcoSalt 2 / DES2",
+   "type": "Salt chlorinator",
+   "file": "manuals/davey-ecosalt2-chlorinator.json",
+   "terms": [
+    "chlorinator",
+    "davey",
+    "des2",
+    "ecosalt",
+    "ecosalt2",
+    "salt"
+   ],
+   "pdf": "manuals/pdf/davey-ecosalt2-chlorinator.pdf"
+  },
+  {
+   "id": "davey-promaster-pump",
+   "name": "Davey ProMaster Pool Pump",
+   "brand": "Davey",
+   "model": "ProMaster",
+   "type": "Pool pump",
+   "file": "manuals/davey-promaster-pump.json",
+   "terms": [
+    "davey",
+    "pool",
+    "priming",
+    "promaster",
+    "pump"
+   ],
+   "pdf": "manuals/pdf/davey-promaster-pump.pdf"
+  },
+  {
+   "id": "davey-silensor-pump",
+   "name": "Davey Silensor Pool Pump",
+   "brand": "Davey",
+   "model": "SLS / SLL series",
+   "type": "Pool pump",
+   "file": "manuals/davey-silensor-pump.json",
+   "terms": [
+    "davey",
+    "pool",
+    "priming",
+    "pump",
+    "quiet",
+    "silensor",
+    "sll",
+    "sls"
+   ],
+   "pdf": "manuals/pdf/davey-silensor-pump.pdf"
+  },
+  {
+   "id": "dolphin-m400-m500-cleaner",
+   "name": "Maytronics Dolphin M400 / M500",
+   "brand": "Maytronics",
+   "model": "M400 / M500",
+   "type": "Robotic pool cleaner",
+   "file": "manuals/dolphin-m400-m500-cleaner.json",
+   "terms": [
+    "basket",
+    "cleaner",
+    "dolphin",
+    "filter",
+    "m400",
+    "m500",
+    "maytronics",
+    "pool",
+    "robot",
+    "robotic",
+    "tracks"
+   ],
+   "pdf": "manuals/pdf/dolphin-m400-m500-cleaner.pdf"
+  },
+  {
+   "id": "evoheat-force-heat-pump",
+   "name": "EvoHeat Force Series Heat Pump",
+   "brand": "EvoHeat",
+   "model": "Force series",
+   "type": "Heat pump",
+   "file": "manuals/evoheat-force-heat-pump.json",
+   "terms": [
+    "evoheat",
+    "force",
+    "heat",
+    "heater",
+    "inverter",
+    "pump"
+   ],
+   "pdf": "manuals/pdf/evoheat-force-heat-pump.pdf"
+  },
+  {
+   "id": "evoheat-force-i-heat-pump",
+   "name": "EvoHeat Force-i Series Heat Pump",
+   "brand": "EvoHeat",
+   "model": "Force-i",
+   "type": "Heat pump",
+   "file": "manuals/evoheat-force-i-heat-pump.json",
+   "terms": [
+    "evoheat",
+    "force-i",
+    "forcei",
+    "heat",
+    "heater",
+    "inverter",
+    "pump",
+    "wifi"
+   ],
+   "pdf": "manuals/pdf/evoheat-force-i-heat-pump.pdf"
+  },
+  {
+   "id": "hayward-aquarite-au",
+   "name": "Hayward AquaRite Chlorinator (AU)",
+   "brand": "Hayward",
+   "model": "AquaRite",
+   "type": "Salt chlorinator",
+   "file": "manuals/hayward-aquarite-au.json",
+   "terms": [
+    "aqua",
+    "aquarite",
+    "au",
+    "cell",
+    "chlorinator",
+    "hayward",
+    "rite",
+    "salt",
+    "turbo"
+   ],
+   "pdf": "manuals/pdf/hayward-aquarite-au.pdf"
+  },
+  {
+   "id": "insnrg-ni-chlorinator",
+   "name": "Insnrg Ni Chlorinator",
+   "brand": "Insnrg",
+   "model": "Ni",
+   "type": "Salt chlorinator",
+   "file": "manuals/insnrg-ni-chlorinator.json",
+   "terms": [
+    "chlorinator",
+    "insnrg",
+    "ni",
+    "salt"
+   ],
+   "pdf": "manuals/pdf/insnrg-ni-chlorinator.pdf"
+  },
+  {
+   "id": "insnrg-si-pump",
+   "name": "Insnrg Si Single Speed Pump",
+   "brand": "Insnrg",
+   "model": "Si",
+   "type": "Pool pump",
+   "file": "manuals/insnrg-si-pump.json",
+   "terms": [
+    "insnrg",
+    "pool",
+    "priming",
+    "pump",
+    "si",
+    "single",
+    "speed"
+   ],
+   "pdf": "manuals/pdf/insnrg-si-pump.pdf"
+  },
+  {
+   "id": "insnrg-vi-chlorinator",
+   "name": "Insnrg Vi Chlorinator and Automation",
+   "brand": "Insnrg",
+   "model": "Vi",
+   "type": "Salt chlorinator",
+   "file": "manuals/insnrg-vi-chlorinator.json",
+   "terms": [
+    "automation",
+    "chlorinator",
+    "insnrg",
+    "ph",
+    "salt",
+    "system",
+    "vi"
+   ],
+   "pdf": "manuals/pdf/insnrg-vi-chlorinator.pdf"
+  },
+  {
+   "id": "madimack-elite-silent-heat-pump",
+   "name": "Madimack Elite Silent Heat Pump",
+   "brand": "Madimack",
+   "model": "Elite Silent",
+   "type": "Heat pump",
+   "file": "manuals/madimack-elite-silent-heat-pump.json",
+   "terms": [
+    "elite",
+    "heat",
+    "heater",
+    "inverter",
+    "madimack",
+    "pump",
+    "silent"
+   ],
+   "pdf": "manuals/pdf/madimack-elite-silent-heat-pump.pdf"
+  },
+  {
+   "id": "madimack-elite-v3-heat-pump",
+   "name": "Madimack Elite V3 Heat Pump",
+   "brand": "Madimack",
+   "model": "Elite V3",
+   "type": "Heat pump",
+   "file": "manuals/madimack-elite-v3-heat-pump.json",
+   "terms": [
+    "elite",
+    "heat",
+    "heater",
+    "inverter",
+    "madimack",
+    "pump",
+    "v3"
+   ],
+   "pdf": "manuals/pdf/madimack-elite-v3-heat-pump.pdf"
+  },
+  {
+   "id": "pentair-mastertemp-heater",
+   "name": "Pentair MasterTemp Gas Heater (AU)",
+   "brand": "Pentair",
+   "model": "MasterTemp",
+   "type": "Gas heater",
+   "file": "manuals/pentair-mastertemp-heater.json",
+   "terms": [
+    "au",
+    "gas",
+    "heater",
+    "mastertemp",
+    "pentair",
+    "spa"
+   ],
+   "pdf": "manuals/pdf/pentair-mastertemp-heater.pdf"
+  },
+  {
+   "id": "waterco-electrochlor",
+   "name": "Waterco Electrochlor Mineral Chlorinator",
+   "brand": "Waterco",
+   "model": "Electrochlor",
+   "type": "Salt chlorinator",
+   "file": "manuals/waterco-electrochlor.json",
+   "terms": [
+    "chlorinator",
+    "electrochlor",
+    "mineral",
+    "salt",
+    "waterco"
+   ],
+   "pdf": "manuals/pdf/waterco-electrochlor.pdf"
+  },
+  {
+   "id": "waterco-hydrochlor",
+   "name": "Waterco Hydrochlor Chlorinator",
+   "brand": "Waterco",
+   "model": "Hydrochlor",
+   "type": "Salt chlorinator",
+   "file": "manuals/waterco-hydrochlor.json",
+   "terms": [
+    "chlorinator",
+    "hydrochlor",
+    "salt",
+    "waterco"
+   ],
+   "pdf": "manuals/pdf/waterco-hydrochlor.pdf"
+  },
+  {
+   "id": "waterco-hydrostorm-ecov",
+   "name": "Waterco Hydrostorm ECO-V Pump",
+   "brand": "Waterco",
+   "model": "ECO-V 100 / 150",
+   "type": "Pool pump",
+   "file": "manuals/waterco-hydrostorm-ecov.json",
+   "terms": [
+    "100",
+    "150",
+    "eco-v",
+    "ecov",
+    "hydrostorm",
+    "pool",
+    "pump",
+    "speed",
+    "variable",
+    "waterco"
+   ],
+   "pdf": "manuals/pdf/waterco-hydrostorm-ecov.pdf"
+  },
+  {
+   "id": "zodiac-mx8-mx6-cleaner",
+   "name": "Zodiac MX8 / MX6 Suction Cleaner",
+   "brand": "Zodiac",
+   "model": "MX8 / MX6",
+   "type": "Suction pool cleaner",
+   "file": "manuals/zodiac-mx8-mx6-cleaner.json",
+   "terms": [
+    "baracuda",
+    "cleaner",
+    "diaphragm",
+    "hose",
+    "mx6",
+    "mx8",
+    "pool",
+    "suction",
+    "zodiac"
+   ],
+   "pdf": "manuals/pdf/zodiac-mx8-mx6-cleaner.pdf"
+  },
+  {
+   "id": "zodiac-tri-chlorinator",
+   "name": "Zodiac TRi Salt Chlorinator",
+   "brand": "Zodiac",
+   "model": "TRi series",
+   "type": "Salt chlorinator",
+   "file": "manuals/zodiac-tri-chlorinator.json",
+   "terms": [
+    "chlorinator",
+    "salt",
+    "tri",
+    "zodiac"
+   ],
+   "pdf": "manuals/pdf/zodiac-tri-chlorinator.pdf"
+  }
+ ]
+}
