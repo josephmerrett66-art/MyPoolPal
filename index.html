@@ -716,6 +716,24 @@
         font-weight: 900;
       }
 
+      .photo-chip.processing {
+        grid-template-columns: auto 1fr;
+        color: var(--muted);
+      }
+
+      .photo-spinner {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        border: 2px solid var(--line);
+        border-top-color: var(--brand);
+        animation: photoSpin 0.7s linear infinite;
+      }
+
+      @keyframes photoSpin {
+        to { transform: rotate(360deg); }
+      }
+
       .message-photos {
         display: flex;
         flex-wrap: wrap;
@@ -1746,7 +1764,7 @@
                 <path d="M12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" stroke="currentColor" stroke-width="2"/>
               </svg>
             </button>
-            <input id="photoInput" type="file" accept="image/png,image/jpeg,image/webp" multiple hidden>
+            <input id="photoInput" type="file" accept="image/*" multiple hidden>
             <textarea id="messageInput" placeholder="Ask Pool Pal about readings, diagnosis, chemicals, procedures, manuals, or photos"></textarea>
             <button class="primary" id="sendButton" type="submit">Send</button>
             <div class="photo-preview" id="photoPreview"></div>
@@ -2219,6 +2237,7 @@
       let cloudSaveSignature = "";
       let isApplyingCloudState = false;
       let selectedChatImages = [];
+      let photoProcessingCount = 0;
 
       const els = {
         sidebar: document.querySelector("#sidebar"),
@@ -4989,20 +5008,36 @@
         const atLimit = selectedChatImages.length >= MAX_CHAT_IMAGES;
         els.photoButton.classList.toggle("at-limit", atLimit);
         els.photoButton.title = atLimit ? `Photo limit reached (${MAX_CHAT_IMAGES} per message)` : "Attach photo";
-        if (!selectedChatImages.length) {
+
+        // While a photo is being processed, block Send so the user can't fire off an
+        // empty/half-ready message — and show them it's working.
+        const processing = photoProcessingCount > 0;
+        if (els.sendButton) {
+          els.sendButton.disabled = processing || isSending;
+          els.sendButton.textContent = processing ? "Preparing photo…" : (isSending ? "Thinking" : "Send");
+        }
+
+        if (!selectedChatImages.length && !processing) {
           els.photoPreview.classList.remove("has-images");
           els.photoPreview.innerHTML = "";
           return;
         }
 
         els.photoPreview.classList.add("has-images");
-        els.photoPreview.innerHTML = selectedChatImages.map((image, index) => `
+        const readyChips = selectedChatImages.map((image, index) => `
           <div class="photo-chip">
             <img src="${escapeHtml(image.dataUrl)}" alt="">
             <span>${escapeHtml(image.name)}</span>
             <button type="button" data-remove-photo="${index}" aria-label="Remove photo">×</button>
           </div>
         `).join("");
+        const processingChips = Array.from({ length: photoProcessingCount }, () => `
+          <div class="photo-chip processing">
+            <span class="photo-spinner" aria-hidden="true"></span>
+            <span>Preparing photo…</span>
+          </div>
+        `).join("");
+        els.photoPreview.innerHTML = readyChips + processingChips;
 
         document.querySelectorAll("[data-remove-photo]").forEach((button) => {
           button.addEventListener("click", () => {
@@ -5012,40 +5047,60 @@
         });
       }
 
-      function resizePhoto(file) {
+      function drawToDataUrl(source, width, height) {
+        const scale = Math.min(1, MAX_CHAT_IMAGE_EDGE / Math.max(width, height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(width * scale));
+        canvas.height = Math.max(1, Math.round(height * scale));
+        canvas.getContext("2d").drawImage(source, 0, 0, canvas.width, canvas.height);
+        return canvas.toDataURL("image/jpeg", 0.72);
+      }
+
+      // Fallback decoder for browsers without createImageBitmap.
+      function resizeViaImage(file) {
         return new Promise((resolve, reject) => {
-          if (!/^image\/(jpeg|png|webp)$/i.test(file.type)) {
-            reject(new Error("Choose a JPG, PNG, or WebP photo."));
-            return;
-          }
-
-          if (file.size > MAX_CHAT_IMAGE_BYTES) {
-            reject(new Error("That photo is too large. Choose a smaller photo or screenshot."));
-            return;
-          }
-
           const reader = new FileReader();
           reader.addEventListener("error", () => reject(new Error("Could not read that photo.")));
           reader.addEventListener("load", () => {
             const image = new Image();
             image.addEventListener("error", () => reject(new Error("Could not load that photo.")));
             image.addEventListener("load", () => {
-              const scale = Math.min(1, MAX_CHAT_IMAGE_EDGE / Math.max(image.width, image.height));
-              const canvas = document.createElement("canvas");
-              canvas.width = Math.max(1, Math.round(image.width * scale));
-              canvas.height = Math.max(1, Math.round(image.height * scale));
-              const context = canvas.getContext("2d");
-              context.drawImage(image, 0, 0, canvas.width, canvas.height);
-              resolve({
-                name: file.name || "Pool photo",
-                mimeType: "image/jpeg",
-                dataUrl: canvas.toDataURL("image/jpeg", 0.72)
-              });
+              try {
+                resolve(drawToDataUrl(image, image.width, image.height));
+              } catch (error) {
+                reject(error);
+              }
             });
             image.src = String(reader.result || "");
           });
           reader.readAsDataURL(file);
         });
+      }
+
+      async function resizePhoto(file) {
+        if (!/^image\//i.test(file.type || "") && !/\.(jpe?g|png|webp|heic|heif|gif|bmp)$/i.test(file.name || "")) {
+          throw new Error("That file isn't a photo. Take or choose a photo.");
+        }
+        if (file.size > MAX_CHAT_IMAGE_BYTES) {
+          throw new Error("That photo is too large — take a screenshot or choose a smaller photo.");
+        }
+
+        let dataUrl;
+        // createImageBitmap decodes the file directly (no huge base64 string in memory),
+        // which is what kept big phone photos from freezing the app.
+        if (typeof createImageBitmap === "function") {
+          try {
+            const bitmap = await createImageBitmap(file);
+            dataUrl = drawToDataUrl(bitmap, bitmap.width, bitmap.height);
+            if (bitmap.close) bitmap.close();
+          } catch (error) {
+            dataUrl = await resizeViaImage(file);
+          }
+        } else {
+          dataUrl = await resizeViaImage(file);
+        }
+
+        return { name: file.name || "Pool photo", mimeType: "image/jpeg", dataUrl };
       }
 
       async function addChatPhotos(files) {
@@ -5059,27 +5114,35 @@
         }
 
         els.photoButton.disabled = true;
-        try {
-          const resized = [];
-          for (const file of selectedFiles) {
-            resized.push(await resizePhoto(file));
+        photoProcessingCount = selectedFiles.length;
+        renderPhotoPreview();   // show "Preparing photo…" immediately
+
+        let failure = null;
+        for (const file of selectedFiles) {
+          try {
+            const image = await resizePhoto(file);
+            selectedChatImages.push(image);
+          } catch (error) {
+            failure = error;
+          } finally {
+            photoProcessingCount = Math.max(0, photoProcessingCount - 1);
+            renderPhotoPreview();   // photo turns into a thumbnail; Send re-enables when done
           }
-          selectedChatImages = selectedChatImages.concat(resized);
-          renderPhotoPreview();
-          els.messageInput.focus();
-          if (allFiles.length > selectedFiles.length) {
-            showSystemMessage(`Only ${MAX_CHAT_IMAGES} photos fit per message, so I attached the first ${selectedFiles.length === 1 ? "one" : selectedFiles.length}.`);
-          }
-        } catch (error) {
-          showSystemMessage(`I could not attach that photo. ${error.message}`);
-        } finally {
-          els.photoButton.disabled = false;
-          els.photoInput.value = "";
+        }
+
+        els.photoButton.disabled = false;
+        els.photoInput.value = "";
+        els.messageInput.focus();
+        if (failure) {
+          showSystemMessage(`I could not attach that photo. ${failure.message}`);
+        } else if (allFiles.length > selectedFiles.length) {
+          showSystemMessage(`Only ${MAX_CHAT_IMAGES} photos fit per message, so I attached the first ${selectedFiles.length === 1 ? "one" : selectedFiles.length}.`);
         }
       }
 
       async function sendMessage(content) {
         if (!requireCloudLogin()) return;
+        if (photoProcessingCount > 0) return;   // wait until the photo is ready
         const clean = content.trim();
         const images = selectedChatImages.slice();
         if (!clean && !images.length) return;
