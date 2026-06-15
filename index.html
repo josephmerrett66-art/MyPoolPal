@@ -2162,8 +2162,14 @@
         "electrochlor", "intellichlor", "viron", "vx", "e-series", "low flow", "error code",
         "fault", "clock", "timer", "reset", "force-i", "force", "elite", "mastertemp",
         "aquarite", "hydrochlor", "ecosalt", "silensor", "promaster", "halo", "mx8",
-        "m400", "m500"
+        "mx6", "m400", "m500", "tri"
       ];
+
+      const STRONG_MANUAL_PRODUCT_TERMS = new Set([
+        "equilibrium", "e-quilibrium", "electrochlor", "hydrochlor", "ecosalt", "silensor",
+        "promaster", "halo", "mastertemp", "aquarite", "force-i", "viron", "dolphin",
+        "mx8", "mx6", "m400", "m500", "trio", "tri"
+      ]);
 
       const DEFAULT_SETTINGS = {
         model: "gpt-5.4-mini",
@@ -3107,17 +3113,50 @@
         return /\b(how do i|how to|what steps|walk me through|change|set|adjust|program|configure|reset|clear|calibrat|clean|replace|remove|install|prime|backwash|rinse|pair|connect|turn on|turn off)\b/i.test(question || "");
       }
 
+      function normalisedManualText(value) {
+        return String(value || "")
+          .toLowerCase()
+          .replace(/e[-\s]?quilib(?:r|ir)?ium/g, "equilibrium")
+          .replace(/\bmadimac\b/g, "madimack")
+          .replace(/[^a-z0-9]+/g, " ")
+          .replace(/\s+/g, " ")
+          .trim();
+      }
+
+      function manualAliasHits(question) {
+        const lower = normalisedManualText(question);
+        const hits = new Set();
+        manualLibraryIndex.forEach((entry) => {
+          const candidates = [
+            entry.name,
+            entry.brand,
+            entry.model,
+            entry.type,
+            ...(entry.terms || [])
+          ].map(normalisedManualText).filter(Boolean);
+          candidates.forEach((candidate) => {
+            if (candidate.length >= 4 && lower.includes(candidate)) hits.add(candidate);
+            candidate.split(" ").forEach((part) => {
+              if (part.length >= 4 && STRONG_MANUAL_PRODUCT_TERMS.has(part) && lower.includes(part)) hits.add(part);
+            });
+          });
+        });
+        return [...hits];
+      }
+
       function productSignal(question) {
         const lower = String(question || "").toLowerCase();
         const brands = MANUAL_PRODUCT_BRANDS.filter((brand) => lower.includes(brand));
         const terms = MANUAL_PRODUCT_TERMS.filter((term) => lower.includes(term));
+        const aliases = manualAliasHits(question);
         const modelCodes = [
           ...(lower.match(/\b(?:[a-z]{1,4}[- ]?)?\d{2,5}[a-z]{0,4}\b/g) || []),
           ...(lower.match(/\b(?:vi|ni|si|xt|zx)\b/g) || [])
         ];
         const asksForManual = /\bmanual\b/i.test(question || "");
-        const productSpecific = brands.length > 0 || (terms.length > 0 && (modelCodes.length > 0 || asksForManual));
-        return { productSpecific, brands, terms, modelCodes };
+        const strongProductTerm = terms.some((term) => STRONG_MANUAL_PRODUCT_TERMS.has(term)) || aliases.length > 0;
+        const productSpecific = brands.length > 0 || strongProductTerm || (terms.length > 0 && (modelCodes.length > 0 || asksForManual));
+        return { productSpecific, brands, terms: [...new Set([...terms, ...aliases])], modelCodes };
       }
 
       function manualExactCodes(question) {
@@ -3454,11 +3493,91 @@
         }, 0);
       }
 
+      function arrayFieldScore(values = [], terms = [], weight = 18) {
+        const haystack = (Array.isArray(values) ? values : []).join(" ").toLowerCase();
+        if (!haystack) return 0;
+        return terms.reduce((sum, term) => sum + (new RegExp(`\\b${escapeRegExp(term)}`, "i").test(haystack) ? weight : 0), 0);
+      }
+
+      function indexedMetadataScore(item, terms, intent) {
+        if (!item?.indexed) return 0;
+        let score = 0;
+        score += arrayFieldScore(item.topics, terms, 22);
+        score += arrayFieldScore(item.procedures, terms, 30);
+        score += arrayFieldScore(item.settings, terms, 20);
+        score += arrayFieldScore(item.components, terms, 14);
+        score += arrayFieldScore(item.keywords, terms, 8);
+        score += arrayFieldScore(item.faultCodes, terms, 72);
+
+        const joined = [
+          ...(item.topics || []),
+          ...(item.procedures || []),
+          ...(item.settings || []),
+          ...(item.components || []),
+          item.summary || "",
+          item.sectionTitle || ""
+        ].join(" ").toLowerCase();
+
+        if (intent?.type === "timer" && /\b(timer|schedule|clock)\b/.test(joined)) score += 42;
+        if (intent?.type === "saltAlarm" && /\b(salt|low salt|recommended salt)\b/.test(joined)) score += 52;
+        if (intent?.type === "fault" && /\b(fault|error|alarm|diagnostic|troubleshoot)\b/.test(joined)) score += 44;
+        if (intent?.type === "flow" && /\b(flow|flow switch|low flow|no flow)\b/.test(joined)) score += 48;
+        if (intent?.type === "dosing" && /\b(acid|dosing|chlorine output|chlorine production)\b/.test(joined)) score += 44;
+        if (intent?.type === "cell" && /\b(cell|electrode|scale|clean cell|inspect cell)\b/.test(joined)) score += 44;
+        if (intent?.type === "filter" && /\b(backwash|rinse|filter|pressure)\b/.test(joined)) score += 44;
+        if (intent?.type === "heater" && /\b(temperature|heater|heat pump|defrost)\b/.test(joined)) score += 42;
+        if (intent?.type === "cleaner" && /\b(cleaner|not moving|climbing|tracks|hose|diaphragm)\b/.test(joined)) score += 44;
+        if (intent?.type === "connection" && /\b(wifi|wi-fi|wireless|bluetooth|app|pair|remote|connect)\b/.test(joined)) score += 44;
+        if (intent?.type === "menu" && /\b(menu|service menu|install menu)\b/.test(joined)) score += 44;
+
+        return score * Math.max(0.45, Math.min(1.1, item.confidence || 0.55));
+      }
+
+      function manualMatchConfidence(match, bestScore, secondScore) {
+        if (!match) return "low";
+        const relevance = match.relevance ?? 0;
+        const gap = bestScore - (secondScore || 0);
+        const indexed = match.indexed || match.bestSection?.indexed;
+        const baseConfidence = Math.max(match.confidence || 0, match.bestSection?.confidence || 0);
+
+        if (relevance >= 118 && gap >= 18 && (indexed ? baseConfidence >= 0.45 : true)) return "high";
+        if (relevance >= 92 && gap >= 10 && (indexed ? baseConfidence >= 0.4 : true)) return "medium";
+        return "low";
+      }
+
       function looksLikeTableOfContents(text) {
         return ((String(text || "").match(/\.{6,}/g) || []).length >= 2);
       }
 
       function manualSectionsForSearch(manual) {
+        if (Array.isArray(manual.indexedSections) && manual.indexedSections.length) {
+          return manual.indexedSections.map((section, index) => ({
+            manualId: manual.id,
+            manualName: manual.name,
+            brand: manual.brand,
+            model: manual.model,
+            type: manual.type,
+            page: section.startPage || section.page,
+            startPage: section.startPage || section.page,
+            endPage: section.endPage || section.startPage || section.page,
+            pages: section.pages || [section.startPage || section.page].filter(Boolean),
+            chunkIndex: index,
+            vector: chunkVector(section),
+            sectionKey: `${manual.id}:ixs${index}`,
+            sectionTitle: section.sectionTitle || inferSectionTitle(section.text),
+            text: section.text,
+            summary: section.summary || "",
+            topics: section.topics || [],
+            procedures: section.procedures || [],
+            faultCodes: section.faultCodes || [],
+            settings: section.settings || [],
+            components: section.components || [],
+            keywords: section.keywords || [],
+            confidence: section.confidence ?? 0.5,
+            indexed: true
+          }));
+        }
+
         // Built-in manuals ship pre-split sections, each with its own embedding.
         if (Array.isArray(manual.sections) && manual.sections.length) {
           return manual.sections.map((section, index) => ({
@@ -3472,7 +3591,16 @@
             vector: chunkVector(section),
             sectionKey: `${manual.id}:s${index}`,
             sectionTitle: section.sectionTitle || inferSectionTitle(section.text),
-            text: section.text
+            text: section.text,
+            summary: section.summary || "",
+            topics: section.topics || [],
+            procedures: section.procedures || [],
+            faultCodes: section.faultCodes || [],
+            settings: section.settings || [],
+            components: section.components || [],
+            keywords: section.keywords || [],
+            confidence: section.confidence ?? 0.45,
+            indexed: false
           }));
         }
 
@@ -3493,7 +3621,16 @@
               vector: null,
               sectionKey: `${manual.id}:${chunkIndex}:${sectionIndex}`,
               sectionTitle: section.title || inferSectionTitle(section.text),
-              text: section.text
+              text: section.text,
+              summary: "",
+              topics: [],
+              procedures: [],
+              faultCodes: [],
+              settings: [],
+              components: [],
+              keywords: [],
+              confidence: 0.35,
+              indexed: false
             });
           });
         });
@@ -3501,6 +3638,58 @@
       }
 
       function manualPagesForSearch(manual) {
+        if (Array.isArray(manual.pages) && manual.pages.length) {
+          const sections = manualSectionsForSearch(manual);
+          return manual.pages.map((page, index) => {
+            const pageSections = sections.filter((section) => {
+              const pages = section.pages?.length ? section.pages : [section.page];
+              return pages.includes(page.page);
+            });
+            return {
+              manualId: manual.id,
+              manualName: manual.name,
+              brand: manual.brand,
+              model: manual.model,
+              type: manual.type,
+              page: page.page,
+              chunkIndex: index,
+              sectionKey: `${manual.id}:ixp${page.page}`,
+              sectionTitle: pageSections[0]?.sectionTitle || page.summary || "Relevant manual page",
+              text: page.text || "",
+              summary: page.summary || "",
+              topics: page.topics || [],
+              procedures: page.procedures || [],
+              faultCodes: page.faultCodes || [],
+              settings: page.settings || [],
+              components: page.components || [],
+              keywords: page.keywords || [],
+              confidence: page.confidence ?? 0.5,
+              indexed: true,
+              sections: pageSections.length ? pageSections : [{
+                manualId: manual.id,
+                manualName: manual.name,
+                brand: manual.brand,
+                model: manual.model,
+                type: manual.type,
+                page: page.page,
+                chunkIndex: index,
+                sectionKey: `${manual.id}:ixp${page.page}:fallback`,
+                sectionTitle: page.summary || "Relevant manual page",
+                text: page.text || "",
+                summary: page.summary || "",
+                topics: page.topics || [],
+                procedures: page.procedures || [],
+                faultCodes: page.faultCodes || [],
+                settings: page.settings || [],
+                components: page.components || [],
+                keywords: page.keywords || [],
+                confidence: page.confidence ?? 0.5,
+                indexed: true
+              }]
+            };
+          });
+        }
+
         const pageMap = new Map();
         manualSectionsForSearch(manual).forEach((section) => {
           const pageKey = section.page || "unknown";
@@ -3575,6 +3764,46 @@
         return Math.min(boost, 40);
       }
 
+      function intentProcedureFitBoost(body, title, intent, wantsProcedure) {
+        if (!intent || !wantsProcedure) return 0;
+        const haystack = `${title || ""}\n${body || ""}`.toLowerCase();
+        const titleText = String(title || "").toLowerCase();
+        let boost = 0;
+
+        if (intent.type === "timer") {
+          if (/\b(set|change|adjust|program)\s+(?:the\s+)?timers?\b|\bset timers?\b|\btimer settings?\b/i.test(titleText)) boost += 92;
+          if (/\bpress\s+(?:the\s+)?timer\s+button\b/i.test(haystack)) boost += 110;
+          if (/\bpress\s+hour\b/i.test(haystack) && /\bpress\s+min\b/i.test(haystack)) boost += 72;
+          if (/\bstart time\b/i.test(haystack) && /\brun time\b/i.test(haystack)) boost += 62;
+          if (intent.mentionsTimer && !intent.mentionsClock && /\bset the clock\b/i.test(titleText)) boost -= 74;
+          if (/\bset auto operation schedule\b/i.test(titleText) && !/\b(auto operation|auto schedule)\b/i.test(String(intent.query || ""))) boost -= 52;
+        }
+
+        if (intent.type === "dosing" && intent.manualDoseAcid) {
+          if (/\bmanual(?:ly)?\s+dose\s+acid\b/i.test(titleText)) boost += 90;
+          if (/\bto manually dose(?:\s+the pool)?\b/i.test(haystack)) boost += 96;
+          if (/\bpress\s+(?:the\s+)?up\/down arrows?\b/i.test(haystack) && /\bpress\s+accept\b/i.test(haystack)) boost += 64;
+          if (/\bwithout sensors|with sensors\b/i.test(titleText) && !intent.mentionsSensors) boost -= 72;
+        }
+
+        if (intent.type === "heater" && intent.setTemperature) {
+          if (/\b(set|change|adjust)\s+(?:the\s+)?(?:temperature|temp|set point)\b/i.test(titleText)) boost += 78;
+          if (/\bpress\b.{0,70}\b(?:up|down|temp|temperature|set)\b/i.test(haystack)) boost += 48;
+        }
+
+        if (intent.type === "connection") {
+          if (/\b(pair|connect|wifi|wi-fi|bluetooth|app setup)\b/i.test(titleText)) boost += 62;
+          if (/\bpress\b.{0,80}\b(pair|connect|wifi|bluetooth|app)\b/i.test(haystack)) boost += 44;
+        }
+
+        if (intent.type === "calibration") {
+          if (/\b(calibrat|probe|sensor|buffer|offset)\b/i.test(titleText)) boost += 64;
+          if (/\bpress\b.{0,80}\b(calibrat|accept|sensor|probe)\b/i.test(haystack)) boost += 42;
+        }
+
+        return boost;
+      }
+
       function genericWrongPagePenalty(body, title, intent, wantsProcedure) {
         const haystack = `${title || ""}\n${body || ""}`.toLowerCase();
         const titleText = String(title || "").toLowerCase();
@@ -3645,9 +3874,11 @@
         const troubleshootPenalty = troubleshootContentPenalty(body, title, intent, wantsProcedure);
         const wrongPagePenalty = genericWrongPagePenalty(body, title, intent, wantsProcedure);
         const settingBoost = settingActionBoost(body, terms, wantsProcedure);
+        const intentFitBoost = intentProcedureFitBoost(body, title, intent, wantsProcedure);
         const codeBoost = exactCodeScore(`${title}\n${body}`, terms);
         const semanticScore = semanticScoreFor(section);
-        const relevance = titleScore + bodyScore + intentScore + procedureScore + semanticScore + settingBoost + codeBoost
+        const indexScore = indexedMetadataScore(section, terms, intent);
+        const relevance = titleScore + bodyScore + intentScore + procedureScore + semanticScore + settingBoost + intentFitBoost + codeBoost + indexScore
           - lengthPenalty - fragmentPenalty - installPenalty - troubleshootPenalty - wrongPagePenalty;
         return { relevance, score: relevance + metaScore };
       }
@@ -3668,18 +3899,22 @@
         const pageHaystack = `${titleText}\n${pageText}`;
         const pageTermScore = terms.reduce((sum, term) => sum + countTermHits(pageHaystack, term, 10) * 2, 0);
         const pageCodeScore = exactCodeScore(pageHaystack, terms);
+        const pageIndexScore = indexedMetadataScore(page, terms, intent);
         const pageIntentScore = manualIntentScore(pageText, titleText, intent) * 0.35;
         const pageProcedureScore = wantsProcedure ? Math.min(manualProcedureScore(pageText, titleText, true), 36) : 0;
+        const pageIntentFitBoost = intentProcedureFitBoost(pageText, titleText, intent, wantsProcedure) * 0.75;
         const supportingScore = scoredSections
           .slice(1, 4)
           .reduce((sum, item) => sum + Math.max(0, Math.min(item.relevance, 18)), 0);
 
-        const relevance = best.relevance + pageTermScore + pageCodeScore + pageIntentScore + pageProcedureScore + supportingScore;
+        const relevance = best.relevance + pageTermScore + pageCodeScore + pageIndexScore + pageIntentScore + pageProcedureScore + pageIntentFitBoost + supportingScore;
         return {
           relevance,
           score: relevance + metaScore,
           bestSection: best.section,
-          sectionScores: scoredSections
+          sectionScores: scoredSections,
+          confidence: page.confidence,
+          indexed: page.indexed
         };
       }
 
@@ -4137,6 +4372,9 @@
                 sectionText: bestSection.text || page.text || "",
                 relevance: scoredPage.relevance,
                 score: scoredPage.score,
+                bestSection,
+                confidence: Math.max(page.confidence || 0, bestSection.confidence || scoredPage.confidence || 0),
+                indexed: Boolean(page.indexed || bestSection.indexed || scoredPage.indexed),
                 metaScore,
                 text: limitText(page.text, MAX_CONTEXT_CHARS.manualReference)
               });
@@ -4179,7 +4417,9 @@
 
         const matches = searchManuals(question);
         const best = matches[0];
-        if (!best || (best.relevance ?? best.score) < 70) {
+        const second = matches[1];
+        const confidence = manualMatchConfidence(best, best?.relevance ?? 0, second?.relevance ?? 0);
+        if (!best || confidence === "low") {
           return {
             status: "missing",
             title: "Manual not found for this product.",
@@ -4211,6 +4451,7 @@
           sectionTitle: best.sectionTitle || inferSectionTitle(sectionText),
           sectionText,
           pageText: limitText(best.text || sectionText, MAX_CONTEXT_CHARS.manualSnippet),
+          confidence,
           related
         };
       }
@@ -4328,6 +4569,9 @@
         const sectionId = `manual-ref-${createId()}`;
         const pdfEntry = reference.manualId ? manualLibraryIndex.find((entry) => entry.id === reference.manualId) : null;
         const pdfPath = pdfEntry?.pdf && reference.page ? pdfEntry.pdf : "";
+        const confidenceNote = reference.confidence === "medium"
+          ? '<span class="manufacturer-section">Medium confidence match — check the page before relying on it.</span>'
+          : "";
         const pageBlock = pdfPath ? `
             <div class="manual-page-actions">
               <button class="small-button" type="button"
@@ -4348,6 +4592,7 @@
                 <span class="manufacturer-kicker">📖 Manufacturer Reference</span>
                 <span class="manufacturer-title">${escapeHtml(reference.manualName || "Uploaded manual")}</span>
                 <span class="manufacturer-section">Section: ${escapeHtml(reference.sectionTitle || "Relevant manual section")}${reference.page ? ` · Page ${escapeHtml(reference.page)}` : ""}</span>
+                ${confidenceNote}
               </span>
               <span class="manufacturer-toggle">Original manual page</span>
             </div>
