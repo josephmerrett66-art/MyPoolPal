@@ -4428,7 +4428,7 @@
         const parts = [
           `Manual match: ${reference.manualName}${reference.page ? `, page ${reference.page}` : ""}`,
           `Equipment: ${[reference.type, reference.brand, reference.model].filter(Boolean).join(" · ") || "Not specified"}`,
-          `Retrieved manufacturer page for "${reference.sectionTitle}" — base any step-by-step instructions on this page text. Keep the button names, menu names, and step order exactly as written; do not invent steps that are not in it. If this page does not actually cover the technician's question, say so and answer from general pool servicing knowledge instead:\n${limitText(manualPageContext, MAX_CONTEXT_CHARS.manualSnippet)}`
+          `Retrieved manufacturer page for "${reference.sectionTitle}" — this is the closest matching page, not necessarily the exact answer. Base any step-by-step instructions on this page text only: keep button names, menu names and step order exactly as written, and do not invent steps that are not here. IMPORTANT: if this page does not actually cover what was asked — or if the equipment plainly does not have the part/feature in the question (e.g. asking to prime an acid dosing pump on a unit that has none) — say that plainly first, then give the best general pool-servicing guidance instead of forcing these steps:\n${limitText(manualPageContext, MAX_CONTEXT_CHARS.manualSnippet)}`
         ];
         const allowRelatedContext = !questionWantsManualProcedure(question);
         (allowRelatedContext ? reference.related || [] : []).forEach((rel) => {
