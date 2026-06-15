@@ -1,6 +1,6 @@
 {
  "version": 1,
- "build": 1781342941,
+ "build": 1781502651,
  "embedModel": "text-embedding-3-small",
  "embedDimensions": 512,
  "manuals": [
