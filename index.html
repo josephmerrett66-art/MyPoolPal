@@ -118,7 +118,7 @@
         height: 100vh;
         min-height: 0;
         display: grid;
-        grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+        grid-template-rows: auto auto auto auto minmax(0, 1fr) auto;
         gap: 14px;
         padding: 16px;
         background: linear-gradient(180deg, #121823 0%, #0d121b 100%);
@@ -234,6 +234,12 @@
         color: var(--ink);
       }
 
+      .conversation-empty {
+        padding: 12px 10px;
+        color: var(--muted);
+        font-size: 0.82rem;
+      }
+
       .conversation-button.active {
         background: var(--brand-soft);
         border-color: rgba(47, 142, 255, 0.26);
@@ -254,10 +260,153 @@
         align-self: end;
         padding-top: 12px;
         border-top: 1px solid var(--line);
+        position: relative;
       }
 
       .sidebar-footer .secondary {
         background: var(--soft);
+      }
+
+      .chat-search {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0 11px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--field);
+        color: var(--muted);
+      }
+
+      .chat-search:focus-within {
+        border-color: rgba(47, 142, 255, 0.45);
+      }
+
+      .chat-search svg {
+        flex: none;
+        color: var(--muted);
+      }
+
+      .chat-search input {
+        border: 0;
+        background: transparent;
+        padding: 9px 0;
+        min-height: 0;
+        color: var(--ink);
+      }
+
+      .chat-search input:focus {
+        box-shadow: none;
+      }
+
+      .profile-row {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 10px;
+        border: 1px solid transparent;
+        border-radius: var(--radius);
+        background: transparent;
+        text-align: left;
+      }
+
+      .profile-row:hover {
+        background: rgba(255, 255, 255, 0.04);
+        border-color: var(--line);
+      }
+
+      .profile-avatar {
+        flex: none;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: var(--brand-soft);
+        color: var(--brand-dark);
+        font-weight: 800;
+        font-size: 0.78rem;
+      }
+
+      .profile-meta {
+        flex: 1;
+        min-width: 0;
+        display: grid;
+        gap: 1px;
+      }
+
+      .profile-meta strong {
+        font-size: 0.84rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .profile-meta span {
+        font-size: 0.72rem;
+        color: var(--muted);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .profile-caret {
+        flex: none;
+        color: var(--muted);
+        transition: transform 160ms ease;
+      }
+
+      .profile-row[aria-expanded="true"] .profile-caret {
+        transform: rotate(180deg);
+      }
+
+      .profile-menu {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: calc(100% - 4px);
+        margin: 0 0 6px;
+        display: grid;
+        gap: 2px;
+        padding: 6px;
+        border: 1px solid var(--line-strong);
+        border-radius: var(--radius);
+        background: var(--surface-2);
+        box-shadow: var(--shadow);
+        z-index: 20;
+      }
+
+      .profile-menu[hidden] {
+        display: none;
+      }
+
+      .profile-menu-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        padding: 9px 10px;
+        border: 0;
+        border-radius: 9px;
+        background: transparent;
+        color: var(--ink);
+        font-weight: 650;
+        text-align: left;
+      }
+
+      .profile-menu-item svg {
+        color: var(--muted);
+        flex: none;
+      }
+
+      .profile-menu-item:hover {
+        background: var(--brand-soft);
+        color: var(--brand-dark);
+      }
+
+      .profile-menu-item:hover svg {
+        color: var(--brand-dark);
       }
 
       .side-card {
@@ -946,6 +1095,59 @@
         padding: 14px;
         display: grid;
         gap: 14px;
+      }
+
+      .knowledge-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .knowledge-tab {
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: transparent;
+        color: var(--muted);
+        padding: 7px 14px;
+        font-weight: 700;
+        font-size: 0.84rem;
+      }
+
+      .knowledge-tab:hover {
+        color: var(--ink);
+        border-color: var(--line-strong);
+      }
+
+      .knowledge-tab.active {
+        background: var(--brand-soft);
+        border-color: rgba(47, 142, 255, 0.30);
+        color: var(--brand-dark);
+      }
+
+      .knowledge-panel {
+        display: grid;
+        gap: 14px;
+      }
+
+      .knowledge-panel[hidden] {
+        display: none;
+      }
+
+      .knowledge-intro {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.86rem;
+        line-height: 1.5;
+      }
+
+      .inline-search {
+        width: auto;
+        min-width: 140px;
+        min-height: 34px;
+        padding: 6px 10px;
+        font-size: 0.84rem;
       }
 
       .form-grid {
@@ -1704,24 +1906,49 @@
           </div>
         </div>
 
-        <button class="primary" id="newChatButton" type="button">New chat</button>
+        <button class="primary" id="newChatButton" type="button">+ New chat</button>
+
+        <div class="chat-search">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/>
+            <path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <input id="chatSearch" type="search" placeholder="Search chats" autocomplete="off">
+        </div>
+
         <button class="secondary library-button" id="knowledgeButton" type="button">
-          <strong>Knowledge Library</strong>
-          <span id="knowledgeButtonSummary">0 manuals uploaded</span>
+          <strong>Manuals &amp; knowledge</strong>
+          <span id="knowledgeButtonSummary">0 manuals</span>
         </button>
 
         <section class="side-section sidebar-history">
-          <div class="label">Past conversations</div>
+          <div class="label">Recent</div>
           <div class="conversation-list" id="conversationList"></div>
         </section>
 
         <section class="side-section sidebar-footer">
-          <button class="secondary stock-button" id="cloudButton" type="button">
-            <strong>Account</strong>
-            <span id="cloudStatus">Checking cloud sync</span>
+          <div class="profile-menu" id="profileMenu" hidden>
+            <button class="profile-menu-item admin-only" id="teamButton" type="button">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M17 20v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9.5 10a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7M22 20v-2a4 4 0 0 0-3-3.87M16 3.13A4 4 0 0 1 16 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Team
+            </button>
+            <button class="profile-menu-item" id="settingsButton" type="button">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Settings
+            </button>
+            <button class="profile-menu-item" id="signOutMenuButton" type="button">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Sign out
+            </button>
+          </div>
+          <button class="profile-row" id="profileButton" type="button" aria-haspopup="menu" aria-expanded="false">
+            <span class="profile-avatar" id="profileAvatar">PP</span>
+            <span class="profile-meta">
+              <strong id="profileName">Pool Pal</strong>
+              <span id="cloudStatus">Checking sync</span>
+            </span>
+            <svg class="profile-caret" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
-          <button class="secondary admin-only" id="teamButton" type="button">Team</button>
-          <button class="secondary" id="settingsButton" type="button">Settings</button>
         </section>
       </aside>
 
@@ -1905,7 +2132,7 @@
       <div class="dialog-head">
         <div>
           <div class="label">Settings</div>
-          <h2>Company and AI configuration</h2>
+          <h2>Assistant &amp; preferences</h2>
         </div>
         <button class="icon" id="closeSettingsButton" type="button" aria-label="Close settings">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -1935,12 +2162,6 @@
           <label>Target chlorine ppm <input id="targetChlorine" inputmode="decimal"></label>
           <label>Target alkalinity ppm <input id="targetAlkalinity" inputmode="decimal"></label>
           <label>Max acid dose ml <input id="maxAcid" inputmode="decimal"></label>
-          <label class="full">Company procedures
-            <textarea id="companyProcedures" rows="5"></textarea>
-          </label>
-          <label class="full">Extra company knowledge
-            <textarea id="companyKnowledge" rows="4"></textarea>
-          </label>
           <div class="settings-section">
             <div>
               <h3>Customer message format</h3>
@@ -2016,64 +2237,88 @@
     <dialog id="knowledgeDialog">
       <div class="dialog-head">
         <div>
-          <div class="label">Knowledge Library</div>
-          <h2>Uploaded manuals and company guides</h2>
+          <div class="label">Manuals &amp; knowledge</div>
+          <h2>What Pool Pal uses to answer for your company</h2>
         </div>
-        <button class="icon" id="closeKnowledgeButton" type="button" aria-label="Close knowledge library">
+        <button class="icon" id="closeKnowledgeButton" type="button" aria-label="Close manuals and knowledge">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path d="M18 6 6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
           </svg>
         </button>
       </div>
       <div class="dialog-body">
-        <section class="admin-only">
-          <h2>Add a manual</h2>
-          <div class="form-grid">
-            <label class="full">PDF manual
-              <input id="manualFile" type="file" accept="application/pdf,.pdf">
-            </label>
-            <label>Manual name
-              <input id="manualName" placeholder="Astral chlorinator manual">
-            </label>
-            <label>Equipment type
-              <input id="manualType" placeholder="Salt chlorinator">
-            </label>
-            <label>Brand
-              <input id="manualBrand" placeholder="Astral">
-            </label>
-            <label>Model
-              <input id="manualModel" placeholder="VX / Viron / E-Series">
-            </label>
-            <label class="full">Notes
-              <textarea id="manualNotes" rows="3" placeholder="Use this for low flow warnings, cell checks, installer notes, or company procedure details."></textarea>
-            </label>
-          </div>
-          <div class="dialog-foot" style="padding-inline:0;background:transparent;border:0;">
-            <div class="upload-status" id="manualUploadStatus"></div>
-            <button class="primary" id="uploadManualButton" type="button">Upload manual</button>
-          </div>
-        </section>
+        <nav class="knowledge-tabs" id="knowledgeTabs">
+          <button class="knowledge-tab active" type="button" data-ktab="manuals">Manuals</button>
+          <button class="knowledge-tab" type="button" data-ktab="procedures">Company procedures</button>
+          <button class="knowledge-tab" type="button" data-ktab="preferences">Tone &amp; preferences</button>
+          <button class="knowledge-tab" type="button" data-ktab="learned">Learned tips</button>
+        </nav>
 
-        <section>
-          <h2>Find manuals</h2>
-          <input id="manualSearch" placeholder="Search by brand, model, type, or notes">
-        </section>
+        <div class="knowledge-panel" data-kpanel="manuals">
+          <p class="knowledge-intro">Equipment manuals Pool Pal cites the exact page from. 27 common manuals are built in — add your own for anything missing.</p>
+          <section>
+            <h3>Built-in manuals</h3>
+            <p class="muted" style="margin:0 0 8px; font-size:0.82rem;">Included with Pool Pal. Pulled in automatically when a question mentions the equipment.</p>
+            <div class="manual-list" id="libraryList"></div>
+          </section>
+          <section>
+            <div class="row-between">
+              <h3>Your uploaded manuals</h3>
+              <input id="manualSearch" class="inline-search" placeholder="Search">
+            </div>
+            <div class="manual-list" id="manualList"></div>
+          </section>
+          <section class="admin-only">
+            <h3>Add a manual</h3>
+            <div class="form-grid">
+              <label class="full">PDF manual
+                <input id="manualFile" type="file" accept="application/pdf,.pdf">
+              </label>
+              <label>Manual name
+                <input id="manualName" placeholder="Astral chlorinator manual">
+              </label>
+              <label>Equipment type
+                <input id="manualType" placeholder="Salt chlorinator">
+              </label>
+              <label>Brand
+                <input id="manualBrand" placeholder="Astral">
+              </label>
+              <label>Model
+                <input id="manualModel" placeholder="VX / Viron / E-Series">
+              </label>
+              <label class="full">Notes
+                <textarea id="manualNotes" rows="3" placeholder="Low flow warnings, cell checks, installer notes."></textarea>
+              </label>
+            </div>
+            <div class="dialog-foot" style="padding-inline:0;background:transparent;border:0;">
+              <div class="upload-status" id="manualUploadStatus"></div>
+              <button class="primary" id="uploadManualButton" type="button">Upload manual</button>
+            </div>
+          </section>
+        </div>
 
-        <section>
-          <h2>Manual list</h2>
-          <div class="manual-list" id="manualList"></div>
-        </section>
+        <div class="knowledge-panel" data-kpanel="procedures" hidden>
+          <p class="knowledge-intro">Your company's step-by-step way of handling common jobs. Pool Pal follows these before generic advice.</p>
+          <label class="full">Company procedures
+            <textarea id="companyProcedures" rows="10" placeholder="Green pool: check circulation first, clean baskets/filter, balance pH, brush, dose chlorine in stages, run pump continuously, escalate if still green.&#10;Low flow / priming: check water level, skimmer & pump baskets, valves, lid O-ring, suction leaks, filter pressure — never run the pump dry."></textarea>
+          </label>
+        </div>
 
-        <section>
-          <h2>Built-in manual library</h2>
-          <p class="muted" style="margin: 0; font-size: 0.84rem;">Common manuals included with Pool Pal — no upload needed. Pool Pal pulls these in automatically when a question mentions the equipment.</p>
-          <div class="manual-list" id="libraryList"></div>
-        </section>
+        <div class="knowledge-panel" data-kpanel="preferences" hidden>
+          <p class="knowledge-intro">House style — how Pool Pal should sound and what to be careful about, for your business.</p>
+          <label class="full">Tone &amp; preferences
+            <textarea id="companyKnowledge" rows="8" placeholder="Use Australian pool service terminology. Be practical and field-friendly. Always be clear about uncertainty. Escalate gas heater faults to a licensed tech."></textarea>
+          </label>
+        </div>
 
-        <section>
-          <h2>Learned company knowledge</h2>
+        <div class="knowledge-panel" data-kpanel="learned" hidden>
+          <p class="knowledge-intro">Quick fixes your team taught Pool Pal by tapping "Improve answer" on a reply.</p>
           <div class="learned-list" id="learnedKnowledgeList"></div>
-        </section>
+        </div>
+      </div>
+      <div class="dialog-foot admin-only" id="knowledgeSaveFoot" hidden>
+        <div class="upload-status" id="knowledgeSaveStatus"></div>
+        <button class="primary" id="saveKnowledgeButton" type="button">Save changes</button>
       </div>
     </dialog>
 
@@ -4711,11 +4956,18 @@
       }
 
       function renderConversations() {
-        els.conversationList.innerHTML = state.conversations.map((chat) => `
-          <button class="conversation-button ${chat.id === state.activeId ? "active" : ""}" type="button" data-chat-id="${chat.id}">
-            ${escapeHtml(chat.title)}
-          </button>
-        `).join("");
+        const query = (document.querySelector("#chatSearch")?.value || "").trim().toLowerCase();
+        const chats = query
+          ? state.conversations.filter((chat) => String(chat.title || "").toLowerCase().includes(query))
+          : state.conversations;
+
+        els.conversationList.innerHTML = chats.length
+          ? chats.map((chat) => `
+            <button class="conversation-button ${chat.id === state.activeId ? "active" : ""}" type="button" data-chat-id="${chat.id}">
+              ${escapeHtml(chat.title)}
+            </button>
+          `).join("")
+          : `<div class="conversation-empty">${query ? "No chats match" : "No chats yet"}</div>`;
 
         document.querySelectorAll("[data-chat-id]").forEach((button) => {
           button.addEventListener("click", () => {
@@ -4725,6 +4977,19 @@
             closeSidebar();
           });
         });
+
+        renderProfileRow();
+      }
+
+      function renderProfileRow() {
+        const nameEl = document.querySelector("#profileName");
+        const avatarEl = document.querySelector("#profileAvatar");
+        if (!nameEl || !avatarEl) return;
+        const email = cloudUser?.email || "";
+        const displayName = email ? email.split("@")[0] : "Pool Pal";
+        nameEl.textContent = displayName;
+        const initials = displayName.replace(/[^a-zA-Z ]/g, "").trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase() || "PP";
+        avatarEl.textContent = initials;
       }
 
       function renderStockButton() {
@@ -5268,8 +5533,6 @@
         document.querySelector("#targetChlorine").value = state.settings.targetChlorine;
         document.querySelector("#targetAlkalinity").value = state.settings.targetAlkalinity;
         document.querySelector("#maxAcid").value = state.settings.maxAcid;
-        document.querySelector("#companyProcedures").value = state.settings.companyProcedures;
-        document.querySelector("#companyKnowledge").value = state.settings.companyKnowledge;
         document.querySelector("#messageTone").value = state.settings.messageTone || DEFAULT_SETTINGS.messageTone;
         document.querySelector("#messageGreeting").value = state.settings.messageGreeting || DEFAULT_SETTINGS.messageGreeting;
         document.querySelector("#messageSignoff").value = state.settings.messageSignoff || DEFAULT_SETTINGS.messageSignoff;
@@ -5298,9 +5561,9 @@
           targetChlorine: document.querySelector("#targetChlorine").value,
           targetAlkalinity: document.querySelector("#targetAlkalinity").value,
           maxAcid: document.querySelector("#maxAcid").value,
-          companyProcedures: document.querySelector("#companyProcedures").value,
+          companyProcedures: state.settings.companyProcedures,
           vehicleStock: state.settings.vehicleStock,
-          companyKnowledge: document.querySelector("#companyKnowledge").value,
+          companyKnowledge: state.settings.companyKnowledge,
           messageTone: document.querySelector("#messageTone").value,
           messageGreeting: document.querySelector("#messageGreeting").value,
           messageSignoff: document.querySelector("#messageSignoff").value,
@@ -5424,8 +5687,43 @@
 
       function openKnowledgeDialog() {
         if (!requireCloudLogin()) return;
+        const admin = isAdmin();
+        document.querySelector("#companyProcedures").value = state.settings.companyProcedures || "";
+        document.querySelector("#companyKnowledge").value = state.settings.companyKnowledge || "";
+        document.querySelector("#companyProcedures").disabled = !admin;
+        document.querySelector("#companyKnowledge").disabled = !admin;
+        setKnowledgeTab("manuals");
         renderKnowledgeDialog();
+        const status = document.querySelector("#knowledgeSaveStatus");
+        if (status) status.textContent = "";
         els.knowledgeDialog.showModal();
+      }
+
+      function setKnowledgeTab(tab) {
+        document.querySelectorAll(".knowledge-tab").forEach((button) => {
+          button.classList.toggle("active", button.dataset.ktab === tab);
+        });
+        document.querySelectorAll(".knowledge-panel").forEach((panel) => {
+          panel.hidden = panel.dataset.kpanel !== tab;
+        });
+        // The Save bar only applies to the editable company-knowledge tabs.
+        const foot = document.querySelector("#knowledgeSaveFoot");
+        if (foot) foot.hidden = !(isAdmin() && (tab === "procedures" || tab === "preferences"));
+      }
+
+      function saveCompanyKnowledge() {
+        if (!isAdmin()) return;
+        state.settings = {
+          ...state.settings,
+          companyProcedures: document.querySelector("#companyProcedures").value,
+          companyKnowledge: document.querySelector("#companyKnowledge").value
+        };
+        saveState();
+        const status = document.querySelector("#knowledgeSaveStatus");
+        if (status) {
+          status.textContent = "Saved";
+          setTimeout(() => { status.textContent = ""; }, 2000);
+        }
       }
 
       function saveStock() {
@@ -5511,8 +5809,7 @@
 
       const SETTINGS_FIELD_IDS = [
         "modelSelect", "responseStyle", "assistantName", "targetPh", "targetChlorine", "targetAlkalinity",
-        "maxAcid", "companyProcedures", "companyKnowledge", "messageTone", "messageGreeting",
-        "messageSignoff", "messageTemplate"
+        "maxAcid", "messageTone", "messageGreeting", "messageSignoff", "messageTemplate"
       ];
 
       function applyRoleToUi() {
@@ -5959,8 +6256,33 @@
       document.querySelector("#newChatButton").addEventListener("click", newChat);
       document.querySelector("#desktopNewChatButton").addEventListener("click", newChat);
       document.querySelector("#mobileNewChatButton").addEventListener("click", newChat);
-      document.querySelector("#settingsButton").addEventListener("click", openSettings);
-      document.querySelector("#cloudButton").addEventListener("click", openCloudDialog);
+      document.querySelector("#settingsButton").addEventListener("click", () => { closeProfileMenu(); openSettings(); });
+      document.querySelector("#cloudButton")?.addEventListener("click", openCloudDialog);
+
+      function closeProfileMenu() {
+        const menu = document.querySelector("#profileMenu");
+        const btn = document.querySelector("#profileButton");
+        if (menu) menu.hidden = true;
+        if (btn) btn.setAttribute("aria-expanded", "false");
+      }
+      function toggleProfileMenu() {
+        const menu = document.querySelector("#profileMenu");
+        const btn = document.querySelector("#profileButton");
+        if (!menu || !btn) return;
+        const open = menu.hidden;
+        menu.hidden = !open;
+        btn.setAttribute("aria-expanded", open ? "true" : "false");
+      }
+      document.querySelector("#profileButton")?.addEventListener("click", (event) => {
+        event.stopPropagation();
+        toggleProfileMenu();
+      });
+      document.querySelector("#signOutMenuButton")?.addEventListener("click", () => { closeProfileMenu(); cloudSignOut(); });
+      document.addEventListener("click", (event) => {
+        const footer = event.target.closest(".sidebar-footer");
+        if (!footer) closeProfileMenu();
+      });
+      document.querySelector("#chatSearch")?.addEventListener("input", renderConversations);
       document.querySelector("#closeCloudButton").addEventListener("click", () => {
         if (!cloudConfigured || cloudUser) els.cloudDialog.close();
       });
@@ -6003,6 +6325,10 @@
       document.querySelector("#closeKnowledgeButton").addEventListener("click", () => els.knowledgeDialog.close());
       document.querySelector("#uploadManualButton").addEventListener("click", uploadManual);
       document.querySelector("#manualSearch").addEventListener("input", renderKnowledgeDialog);
+      document.querySelectorAll(".knowledge-tab").forEach((button) => {
+        button.addEventListener("click", () => setKnowledgeTab(button.dataset.ktab));
+      });
+      document.querySelector("#saveKnowledgeButton")?.addEventListener("click", saveCompanyKnowledge);
       document.querySelector("#closeImproveButton").addEventListener("click", closeImproveDialog);
       document.querySelector("#cancelImproveButton").addEventListener("click", closeImproveDialog);
       document.querySelector("#saveImproveButton").addEventListener("click", saveImprovement);
