@@ -1150,6 +1150,63 @@
         font-size: 0.84rem;
       }
 
+      .add-collapse {
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--soft);
+        overflow: hidden;
+      }
+
+      .add-collapse > summary {
+        list-style: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 14px;
+        font-weight: 750;
+        color: var(--ink);
+      }
+
+      .add-collapse > summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .add-collapse-plus {
+        display: grid;
+        place-items: center;
+        width: 22px;
+        height: 22px;
+        border-radius: 7px;
+        background: var(--brand-soft);
+        color: var(--brand-dark);
+        font-weight: 900;
+        transition: transform 160ms ease;
+      }
+
+      .add-collapse[open] .add-collapse-plus {
+        transform: rotate(45deg);
+      }
+
+      .add-collapse-body {
+        display: grid;
+        gap: 12px;
+        padding: 0 14px 14px;
+      }
+
+      .learned-actions {
+        display: flex;
+        gap: 6px;
+      }
+
+      .learned-body {
+        color: var(--ink);
+        font-size: 0.86rem;
+        line-height: 1.5;
+        white-space: pre-wrap;
+        margin-top: 4px;
+      }
+
       .form-grid {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1324,9 +1381,29 @@
         overflow: hidden;
       }
 
+      .sidebar-overlay {
+        display: none;
+      }
+
       @media (max-width: 860px) {
         .app {
           grid-template-columns: 1fr;
+        }
+
+        .sidebar-overlay {
+          display: block;
+          position: fixed;
+          inset: 0;
+          z-index: 40;
+          background: rgba(3, 6, 12, 0.55);
+          opacity: 0;
+          pointer-events: none;
+          transition: opacity 180ms ease;
+        }
+
+        .drawer-open .sidebar-overlay {
+          opacity: 1;
+          pointer-events: auto;
         }
 
         .sidebar {
@@ -1952,6 +2029,8 @@
         </section>
       </aside>
 
+      <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+
       <section class="chat-shell">
         <div class="mobile-top">
           <button class="icon" id="openSidebarButton" type="button" aria-label="Open sidebar">
@@ -2249,59 +2328,69 @@
       <div class="dialog-body">
         <nav class="knowledge-tabs" id="knowledgeTabs">
           <button class="knowledge-tab active" type="button" data-ktab="manuals">Manuals</button>
-          <button class="knowledge-tab" type="button" data-ktab="procedures">Company procedures</button>
+          <button class="knowledge-tab" type="button" data-ktab="knowledge">Company knowledge</button>
           <button class="knowledge-tab" type="button" data-ktab="preferences">Tone &amp; preferences</button>
-          <button class="knowledge-tab" type="button" data-ktab="learned">Learned tips</button>
         </nav>
 
         <div class="knowledge-panel" data-kpanel="manuals">
-          <p class="knowledge-intro">Equipment manuals Pool Pal cites the exact page from. 27 common manuals are built in — add your own for anything missing.</p>
-          <section>
-            <h3>Built-in manuals</h3>
-            <p class="muted" style="margin:0 0 8px; font-size:0.82rem;">Included with Pool Pal. Pulled in automatically when a question mentions the equipment.</p>
-            <div class="manual-list" id="libraryList"></div>
-          </section>
+          <details class="add-collapse admin-only" id="addManualCollapse">
+            <summary><span class="add-collapse-plus">+</span> Add a manual</summary>
+            <div class="add-collapse-body">
+              <div class="form-grid">
+                <label class="full">PDF manual
+                  <input id="manualFile" type="file" accept="application/pdf,.pdf">
+                </label>
+                <label>Manual name
+                  <input id="manualName" placeholder="Astral chlorinator manual">
+                </label>
+                <label>Equipment type
+                  <input id="manualType" placeholder="Salt chlorinator">
+                </label>
+                <label>Brand
+                  <input id="manualBrand" placeholder="Astral">
+                </label>
+                <label>Model
+                  <input id="manualModel" placeholder="VX / Viron / E-Series">
+                </label>
+                <label class="full">Notes
+                  <textarea id="manualNotes" rows="3" placeholder="Low flow warnings, cell checks, installer notes."></textarea>
+                </label>
+              </div>
+              <div class="dialog-foot" style="padding-inline:0;background:transparent;border:0;">
+                <div class="upload-status" id="manualUploadStatus"></div>
+                <button class="primary" id="uploadManualButton" type="button">Upload manual</button>
+              </div>
+            </div>
+          </details>
           <section>
             <div class="row-between">
-              <h3>Your uploaded manuals</h3>
+              <h3>Built-in manuals</h3>
               <input id="manualSearch" class="inline-search" placeholder="Search">
             </div>
+            <p class="muted" style="margin:0 0 8px; font-size:0.82rem;">27 common manuals included with Pool Pal — cited automatically when a question mentions the equipment. Your uploads appear below.</p>
+            <div class="manual-list" id="libraryList"></div>
             <div class="manual-list" id="manualList"></div>
-          </section>
-          <section class="admin-only">
-            <h3>Add a manual</h3>
-            <div class="form-grid">
-              <label class="full">PDF manual
-                <input id="manualFile" type="file" accept="application/pdf,.pdf">
-              </label>
-              <label>Manual name
-                <input id="manualName" placeholder="Astral chlorinator manual">
-              </label>
-              <label>Equipment type
-                <input id="manualType" placeholder="Salt chlorinator">
-              </label>
-              <label>Brand
-                <input id="manualBrand" placeholder="Astral">
-              </label>
-              <label>Model
-                <input id="manualModel" placeholder="VX / Viron / E-Series">
-              </label>
-              <label class="full">Notes
-                <textarea id="manualNotes" rows="3" placeholder="Low flow warnings, cell checks, installer notes."></textarea>
-              </label>
-            </div>
-            <div class="dialog-foot" style="padding-inline:0;background:transparent;border:0;">
-              <div class="upload-status" id="manualUploadStatus"></div>
-              <button class="primary" id="uploadManualButton" type="button">Upload manual</button>
-            </div>
           </section>
         </div>
 
-        <div class="knowledge-panel" data-kpanel="procedures" hidden>
-          <p class="knowledge-intro">Your company's step-by-step way of handling common jobs. Pool Pal follows these before generic advice.</p>
-          <label class="full">Company procedures
-            <textarea id="companyProcedures" rows="10" placeholder="Green pool: check circulation first, clean baskets/filter, balance pH, brush, dose chlorine in stages, run pump continuously, escalate if still green.&#10;Low flow / priming: check water level, skimmer & pump baskets, valves, lid O-ring, suction leaks, filter pressure — never run the pump dry."></textarea>
-          </label>
+        <div class="knowledge-panel" data-kpanel="knowledge" hidden>
+          <p class="knowledge-intro">Your company's procedures and the fixes your team has taught Pool Pal — it uses these before generic advice.</p>
+          <details class="add-collapse admin-only" id="addKnowledgeCollapse">
+            <summary><span class="add-collapse-plus">+</span> Add knowledge</summary>
+            <div class="add-collapse-body">
+              <label class="full">Title
+                <input id="knowledgeEntryTitle" placeholder="Green pool procedure">
+              </label>
+              <label class="full">Knowledge
+                <textarea id="knowledgeEntryText" rows="5" placeholder="Green pool: check circulation first, clean baskets/filter, balance pH, brush, dose chlorine in stages, run pump continuously, escalate if still green."></textarea>
+              </label>
+              <div class="dialog-foot" style="padding-inline:0;background:transparent;border:0;">
+                <div class="upload-status" id="knowledgeSaveStatus"></div>
+                <button class="primary" id="addKnowledgeButton" type="button">Add knowledge</button>
+              </div>
+            </div>
+          </details>
+          <div class="learned-list" id="learnedKnowledgeList"></div>
         </div>
 
         <div class="knowledge-panel" data-kpanel="preferences" hidden>
@@ -2310,14 +2399,9 @@
             <textarea id="companyKnowledge" rows="8" placeholder="Use Australian pool service terminology. Be practical and field-friendly. Always be clear about uncertainty. Escalate gas heater faults to a licensed tech."></textarea>
           </label>
         </div>
-
-        <div class="knowledge-panel" data-kpanel="learned" hidden>
-          <p class="knowledge-intro">Quick fixes your team taught Pool Pal by tapping "Improve answer" on a reply.</p>
-          <div class="learned-list" id="learnedKnowledgeList"></div>
-        </div>
       </div>
       <div class="dialog-foot admin-only" id="knowledgeSaveFoot" hidden>
-        <div class="upload-status" id="knowledgeSaveStatus"></div>
+        <div class="upload-status" id="tonePrefStatus"></div>
         <button class="primary" id="saveKnowledgeButton" type="button">Save changes</button>
       </div>
     </dialog>
@@ -4501,33 +4585,36 @@
           }).join("") : '<div class="manual-row"><span class="manual-meta">The built-in library is growing — common manuals will appear here.</span></div>';
         }
 
-        const learned = state.companyKnowledgeEntries
-          .filter((entry) => !query || knowledgeMetaText(entry).toLowerCase().includes(query))
+        const learned = [...state.companyKnowledgeEntries]
           .sort((a, b) => String(b.createdDate).localeCompare(String(a.createdDate)));
 
         els.learnedKnowledgeList.innerHTML = learned.length ? learned.map((entry) => {
-          const created = new Date(entry.createdDate).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" });
-          const meta = [
-            entry.equipmentType,
-            entry.equipmentBrand,
-            entry.issueCategory,
-            `Created ${created}`
-          ].filter(Boolean).join(" · ");
+          const created = entry.createdDate ? new Date(entry.createdDate).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" }) : "";
+          const source = entry.source === "Technician Improvement" ? "Taught via Improve answer"
+            : entry.source === "Company procedure" ? "Company procedure"
+            : "Added by admin";
+          const meta = [source, created].filter(Boolean).join(" · ");
 
           return `
             <div class="learned-row">
               <div class="row-between">
                 <strong>${escapeHtml(entry.title)}</strong>
-                ${isAdmin() ? `<button class="small-button" type="button" data-delete-knowledge="${entry.id}">Delete</button>` : ""}
+                ${isAdmin() ? `<div class="learned-actions">
+                  <button class="small-button" type="button" data-edit-knowledge="${entry.id}">Edit</button>
+                  <button class="small-button" type="button" data-delete-knowledge="${entry.id}">Delete</button>
+                </div>` : ""}
               </div>
               <div class="manual-meta">${escapeHtml(meta)}</div>
-              <div class="manual-meta">${escapeHtml(entry.knowledgeEntry)}</div>
+              <div class="learned-body">${escapeHtml(entry.knowledgeEntry)}</div>
             </div>
           `;
-        }).join("") : '<div class="learned-row"><span class="manual-meta">No technician improvements saved yet.</span></div>';
+        }).join("") : '<div class="learned-row"><span class="manual-meta">No company knowledge yet. Add some above, or tap "Improve answer" on a reply.</span></div>';
 
         document.querySelectorAll("[data-delete-knowledge]").forEach((button) => {
           button.addEventListener("click", () => deleteKnowledgeEntry(button.dataset.deleteKnowledge));
+        });
+        document.querySelectorAll("[data-edit-knowledge]").forEach((button) => {
+          button.addEventListener("click", () => editKnowledgeEntry(button.dataset.editKnowledge));
         });
       }
 
@@ -5685,17 +5772,16 @@
         els.stockDialog.showModal();
       }
 
+      let editingKnowledgeId = null;
+
       function openKnowledgeDialog() {
         if (!requireCloudLogin()) return;
         const admin = isAdmin();
-        document.querySelector("#companyProcedures").value = state.settings.companyProcedures || "";
         document.querySelector("#companyKnowledge").value = state.settings.companyKnowledge || "";
-        document.querySelector("#companyProcedures").disabled = !admin;
         document.querySelector("#companyKnowledge").disabled = !admin;
+        resetKnowledgeEntryForm();
         setKnowledgeTab("manuals");
         renderKnowledgeDialog();
-        const status = document.querySelector("#knowledgeSaveStatus");
-        if (status) status.textContent = "";
         els.knowledgeDialog.showModal();
       }
 
@@ -5706,24 +5792,115 @@
         document.querySelectorAll(".knowledge-panel").forEach((panel) => {
           panel.hidden = panel.dataset.kpanel !== tab;
         });
-        // The Save bar only applies to the editable company-knowledge tabs.
+        // The Save bar applies only to the free-text Tone & preferences tab.
         const foot = document.querySelector("#knowledgeSaveFoot");
-        if (foot) foot.hidden = !(isAdmin() && (tab === "procedures" || tab === "preferences"));
+        if (foot) foot.hidden = !(isAdmin() && tab === "preferences");
       }
 
+      // Tone & preferences (free-text house style) still saves as a settings field.
       function saveCompanyKnowledge() {
         if (!isAdmin()) return;
         state.settings = {
           ...state.settings,
-          companyProcedures: document.querySelector("#companyProcedures").value,
           companyKnowledge: document.querySelector("#companyKnowledge").value
         };
         saveState();
-        const status = document.querySelector("#knowledgeSaveStatus");
+        const status = document.querySelector("#tonePrefStatus");
         if (status) {
           status.textContent = "Saved";
           setTimeout(() => { status.textContent = ""; }, 2000);
         }
+      }
+
+      function resetKnowledgeEntryForm() {
+        editingKnowledgeId = null;
+        const title = document.querySelector("#knowledgeEntryTitle");
+        const text = document.querySelector("#knowledgeEntryText");
+        const button = document.querySelector("#addKnowledgeButton");
+        const collapse = document.querySelector("#addKnowledgeCollapse");
+        const status = document.querySelector("#knowledgeSaveStatus");
+        if (title) title.value = "";
+        if (text) text.value = "";
+        if (button) button.textContent = "Add knowledge";
+        if (collapse) collapse.open = false;
+        if (status) status.textContent = "";
+      }
+
+      // Company knowledge = a list of editable entries (procedures + "Improve answer" tips).
+      function addOrUpdateKnowledgeEntry() {
+        if (!isAdmin()) return;
+        const title = document.querySelector("#knowledgeEntryTitle").value.trim();
+        const text = document.querySelector("#knowledgeEntryText").value.trim();
+        const status = document.querySelector("#knowledgeSaveStatus");
+        if (!text) {
+          if (status) status.textContent = "Type the knowledge first.";
+          return;
+        }
+        const now = new Date().toISOString();
+        state.companyKnowledgeEntries = state.companyKnowledgeEntries || [];
+        if (editingKnowledgeId) {
+          const entry = state.companyKnowledgeEntries.find((item) => item.id === editingKnowledgeId);
+          if (entry) {
+            entry.title = title || entry.title || "Company knowledge";
+            entry.knowledgeEntry = text;
+            entry.lastModifiedDate = now;
+          }
+        } else {
+          state.companyKnowledgeEntries.unshift({
+            id: createId(),
+            companyId: "local-company",
+            title: title || "Company knowledge",
+            equipmentType: "General",
+            equipmentBrand: "",
+            issueCategory: "Company knowledge",
+            knowledgeEntry: text,
+            source: "Added by admin",
+            createdBy: "Admin",
+            createdDate: now,
+            lastModifiedDate: now
+          });
+        }
+        resetKnowledgeEntryForm();
+        saveState();
+        renderKnowledgeButton();
+        renderKnowledgeDialog();
+      }
+
+      function editKnowledgeEntry(id) {
+        const entry = state.companyKnowledgeEntries.find((item) => item.id === id);
+        if (!entry) return;
+        editingKnowledgeId = id;
+        document.querySelector("#knowledgeEntryTitle").value = entry.title || "";
+        document.querySelector("#knowledgeEntryText").value = entry.knowledgeEntry || "";
+        document.querySelector("#addKnowledgeButton").textContent = "Save changes";
+        document.querySelector("#addKnowledgeCollapse").open = true;
+        document.querySelector("#knowledgeEntryTitle").focus();
+      }
+
+      // One-time: fold the old single-textarea company procedures into the entry list.
+      function migrateCompanyProceduresToEntries() {
+        if (!state.settings || state.settings.proceduresMigrated) return;
+        const text = String(state.settings.companyProcedures || "").trim();
+        state.companyKnowledgeEntries = state.companyKnowledgeEntries || [];
+        const alreadyHas = state.companyKnowledgeEntries.some((entry) => entry.source === "Company procedure");
+        if (text && !alreadyHas) {
+          const now = new Date().toISOString();
+          state.companyKnowledgeEntries.unshift({
+            id: createId(),
+            companyId: "local-company",
+            title: "Company procedures",
+            equipmentType: "General",
+            equipmentBrand: "",
+            issueCategory: "Procedure",
+            knowledgeEntry: text,
+            source: "Company procedure",
+            createdBy: "Admin",
+            createdDate: now,
+            lastModifiedDate: now
+          });
+        }
+        state.settings = { ...state.settings, proceduresMigrated: true };
+        saveState();
       }
 
       function saveStock() {
@@ -6329,6 +6506,7 @@
         button.addEventListener("click", () => setKnowledgeTab(button.dataset.ktab));
       });
       document.querySelector("#saveKnowledgeButton")?.addEventListener("click", saveCompanyKnowledge);
+      document.querySelector("#addKnowledgeButton")?.addEventListener("click", addOrUpdateKnowledgeEntry);
       document.querySelector("#closeImproveButton").addEventListener("click", closeImproveDialog);
       document.querySelector("#cancelImproveButton").addEventListener("click", closeImproveDialog);
       document.querySelector("#saveImproveButton").addEventListener("click", saveImprovement);
@@ -6349,10 +6527,12 @@
         openSettings();
       });
       document.querySelector("#openSidebarButton").addEventListener("click", openSidebar);
+      document.querySelector("#sidebarOverlay").addEventListener("click", closeSidebar);
       document.querySelector("#startWelcomeButton").addEventListener("click", () => closeWelcome(false));
       document.querySelector("#hideWelcomeButton").addEventListener("click", () => closeWelcome(true));
 
       setupVoice();
+      migrateCompanyProceduresToEntries();
       renderAll();
       initialiseAccess();
       initialiseCloud();
