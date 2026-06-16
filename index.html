@@ -2500,7 +2500,8 @@
       const MANUAL_PRODUCT_BRANDS = [
         "astral", "viron", "zodiac", "waterco", "pentair", "hayward", "madimack", "davey",
         "fluidra", "maytronics", "dolphin", "oasis", "evoheat", "theralux", "insnrg",
-        "chloromatic", "autochlor", "hurlcon", "emaux", "paramount", "jandy", "rheem"
+        "chloromatic", "autochlor", "hurlcon", "emaux", "paramount", "jandy", "rheem",
+        "dontek", "naked"
       ];
 
       const MANUAL_PRODUCT_TERMS = [
@@ -2509,13 +2510,16 @@
         "electrochlor", "intellichlor", "viron", "vx", "e-series", "low flow", "error code",
         "fault", "clock", "timer", "reset", "force-i", "force", "elite", "mastertemp",
         "aquarite", "hydrochlor", "ecosalt", "silensor", "promaster", "halo", "mx8",
-        "mx6", "m400", "m500", "tri"
+        "mx6", "m400", "m500", "tri", "aquatek", "aquachem", "aqualink", "aquasmart",
+        "aquaheat", "aquasun", "freshwater", "nkd"
       ];
 
       const STRONG_MANUAL_PRODUCT_TERMS = new Set([
         "equilibrium", "e-quilibrium", "electrochlor", "hydrochlor", "ecosalt", "silensor",
         "promaster", "halo", "mastertemp", "aquarite", "force-i", "viron", "dolphin",
-        "mx8", "mx6", "m400", "m500", "trio", "tri"
+        "mx8", "mx6", "m400", "m500", "trio", "tri",
+        "dontek", "aquatek", "aquachem", "aqualink", "iaqualink", "aquasmart", "aquaheat",
+        "aquasun", "naked", "nkd", "freshwater"
       ]);
 
       const DEFAULT_SETTINGS = {
@@ -3921,8 +3925,12 @@
       function manualMatchConfidence(match) {
         if (!match) return "low";
         const relevance = match.relevance ?? 0;
+        const meta = match.metaScore ?? 0;
         if (relevance >= 70) return "high";
         if (relevance >= 34) return "medium";
+        // Strong brand+model match on a sparse/image-heavy manual — it's still the
+        // right manual; the page image carries the answer even if the text is thin.
+        if (meta >= 40) return "medium";
         return "low";
       }
 
@@ -4767,7 +4775,10 @@
             const scoredPage = scoreManualPage(page, terms, intent, wantsProcedure, metaScore);
             const asksForWifi = intent.type === "connection" && /\b(wifi|wi-fi|wireless|network|app)\b/i.test(question || "");
             const pageMentionsWifi = /\b(wifi|wi-fi|wireless|network|vista pool app|mobile app|app setup)\b/i.test(`${page.sectionTitle || ""}\n${page.text || ""}`);
-            if (scoredPage && scoredPage.relevance > 8 && (!asksForWifi || pageMentionsWifi)) {
+            // A clear brand+model match (high metaScore) on an image-heavy manual with
+            // little extractable text should still surface — the page image carries it.
+            const strongMeta = metaScore >= 40;
+            if (scoredPage && (scoredPage.relevance > 8 || strongMeta) && (!asksForWifi || pageMentionsWifi || strongMeta)) {
               const bestSection = scoredPage.bestSection || page.sections[0] || {};
               results.push({
                 ...page,

@@ -1,6 +1,6 @@
 {
  "version": 1,
- "build": 1781502651,
+ "build": 1781608664,
  "embedModel": "text-embedding-3-small",
  "embedDimensions": 512,
  "manuals": [
@@ -259,6 +259,105 @@
    "pdf": "manuals/pdf/dolphin-m400-m500-cleaner.pdf"
   },
   {
+   "id": "dontek-aquachem",
+   "name": "Dontek Aquachem pH & Chlorine Doser",
+   "brand": "Dontek",
+   "model": "Aquachem",
+   "type": "pH and chlorine dosing",
+   "file": "manuals/dontek-aquachem.json",
+   "terms": [
+    "aquachem",
+    "chlorine",
+    "dontek",
+    "doser",
+    "dosing",
+    "orp",
+    "ph",
+    "probe",
+    "squeeze",
+    "tube"
+   ],
+   "pdf": "manuals/pdf/dontek-aquachem.pdf"
+  },
+  {
+   "id": "dontek-aquaheat-tc",
+   "name": "Dontek Aquaheat 5 TC Heating Controller",
+   "brand": "Dontek",
+   "model": "Aquaheat 5 TC",
+   "type": "Heating controller",
+   "file": "manuals/dontek-aquaheat-tc.json",
+   "terms": [
+    "aquaheat",
+    "controller",
+    "dontek",
+    "heating",
+    "solar",
+    "tc",
+    "temperature"
+   ],
+   "pdf": "manuals/pdf/dontek-aquaheat-tc.pdf"
+  },
+  {
+   "id": "dontek-aquasmart-rta",
+   "name": "Dontek Aquasmart 5 RTA Controller",
+   "brand": "Dontek",
+   "model": "Aquasmart 5 RTA",
+   "type": "Pool controller automation",
+   "file": "manuals/dontek-aquasmart-rta.json",
+   "terms": [
+    "aquasmart",
+    "automation",
+    "controller",
+    "dontek",
+    "heating",
+    "pool",
+    "relay",
+    "rta",
+    "solar",
+    "timer"
+   ],
+   "pdf": "manuals/pdf/dontek-aquasmart-rta.pdf"
+  },
+  {
+   "id": "dontek-aquasun3",
+   "name": "Dontek Aquasun 3 Solar Controller",
+   "brand": "Dontek",
+   "model": "Aquasun 3",
+   "type": "Solar heating controller",
+   "file": "manuals/dontek-aquasun3.json",
+   "terms": [
+    "aquasun",
+    "controller",
+    "dontek",
+    "heating",
+    "pool",
+    "solar"
+   ],
+   "pdf": "manuals/pdf/dontek-aquasun3.pdf"
+  },
+  {
+   "id": "dontek-aquatek",
+   "name": "Dontek Aquatek Pool Controller",
+   "brand": "Dontek",
+   "model": "Aquatek",
+   "type": "Pool controller automation",
+   "file": "manuals/dontek-aquatek.json",
+   "terms": [
+    "app",
+    "aquachem",
+    "aquatek",
+    "automation",
+    "chlorinator",
+    "controller",
+    "dontek",
+    "heating",
+    "pool",
+    "spa",
+    "wifi"
+   ],
+   "pdf": "manuals/pdf/dontek-aquatek.pdf"
+  },
+  {
    "id": "evoheat-force-heat-pump",
    "name": "EvoHeat Force Series Heat Pump",
    "brand": "EvoHeat",
@@ -315,6 +414,29 @@
    "pdf": "manuals/pdf/hayward-aquarite-au.pdf"
   },
   {
+   "id": "iaqualink-webconnect",
+   "name": "iAquaLink Web Connect Device",
+   "brand": "Jandy",
+   "model": "iAquaLink",
+   "type": "Pool controller automation",
+   "file": "manuals/iaqualink-webconnect.json",
+   "terms": [
+    "app",
+    "automation",
+    "connect",
+    "controller",
+    "device",
+    "iaqualink",
+    "jandy",
+    "pairing",
+    "pool",
+    "web",
+    "wifi",
+    "zodiac"
+   ],
+   "pdf": "manuals/pdf/iaqualink-webconnect.pdf"
+  },
+  {
    "id": "insnrg-ni-chlorinator",
    "name": "Insnrg Ni Chlorinator",
    "brand": "Insnrg",
@@ -366,6 +488,27 @@
    "pdf": "manuals/pdf/insnrg-vi-chlorinator.pdf"
   },
   {
+   "id": "jandy-aqualink-rs",
+   "name": "Jandy AquaLink RS Automation",
+   "brand": "Jandy",
+   "model": "AquaLink RS",
+   "type": "Pool controller automation",
+   "file": "manuals/jandy-aqualink-rs.json",
+   "terms": [
+    "aqualink",
+    "automation",
+    "controller",
+    "heating",
+    "iaqualink",
+    "jandy",
+    "pool",
+    "rs",
+    "spa",
+    "zodiac"
+   ],
+   "pdf": "manuals/pdf/jandy-aqualink-rs.pdf"
+  },
+  {
    "id": "madimack-elite-silent-heat-pump",
    "name": "Madimack Elite Silent Heat Pump",
    "brand": "Madimack",
@@ -400,6 +543,84 @@
     "v3"
    ],
    "pdf": "manuals/pdf/madimack-elite-v3-heat-pump.pdf"
+  },
+  {
+   "id": "naked-nkd-m",
+   "name": "Naked NKD-M Freshwater System",
+   "brand": "Naked",
+   "model": "NKD-M",
+   "type": "Freshwater mineral system",
+   "file": "manuals/naked-nkd-m.json",
+   "terms": [
+    "copper",
+    "freshwater",
+    "mineral",
+    "naked",
+    "nkd-m",
+    "pool",
+    "system"
+   ],
+   "pdf": "manuals/pdf/naked-nkd-m.pdf"
+  },
+  {
+   "id": "naked-nkd-ph",
+   "name": "Naked NKD-pH Doser",
+   "brand": "Naked",
+   "model": "NKD-pH",
+   "type": "pH dosing",
+   "file": "manuals/naked-nkd-ph.json",
+   "terms": [
+    "acid",
+    "control",
+    "doser",
+    "dosing",
+    "freshwater",
+    "naked",
+    "nkd-ph",
+    "ph"
+   ],
+   "pdf": "manuals/pdf/naked-nkd-ph.pdf"
+  },
+  {
+   "id": "naked-nkd-r",
+   "name": "Naked NKD-R Freshwater System",
+   "brand": "Naked",
+   "model": "NKD-R",
+   "type": "Freshwater mineral system",
+   "file": "manuals/naked-nkd-r.json",
+   "terms": [
+    "chlorinator",
+    "copper",
+    "freshwater",
+    "mineral",
+    "naked",
+    "nkd-r",
+    "not",
+    "pool",
+    "salt",
+    "system"
+   ],
+   "pdf": "manuals/pdf/naked-nkd-r.pdf"
+  },
+  {
+   "id": "naked-nkd1",
+   "name": "Naked NKD1 Freshwater System (pre-2020)",
+   "brand": "Naked",
+   "model": "NKD1",
+   "type": "Freshwater mineral system",
+   "file": "manuals/naked-nkd1.json",
+   "terms": [
+    "copper",
+    "freshwater",
+    "mineral",
+    "naked",
+    "nkd1",
+    "older",
+    "pool",
+    "pre-2020",
+    "system"
+   ],
+   "pdf": "manuals/pdf/naked-nkd1.pdf"
   },
   {
    "id": "pentair-mastertemp-heater",
