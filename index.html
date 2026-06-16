@@ -2378,12 +2378,38 @@
         return text.length <= maxChars ? text : `${text.slice(0, maxChars)}\n[trimmed]`;
       }
 
+      // Build the persisted copy of state WITHOUT the heavy base64 photo data.
+      // Photos stay in memory for the current session (display + sending to the AI),
+      // but persisting them overflows localStorage and used to crash the send flow.
+      function serialiseStateForStorage() {
+        try {
+          return JSON.stringify({
+            ...state,
+            conversations: (state.conversations || []).map((conversation) => ({
+              ...conversation,
+              messages: (conversation.messages || []).map((message) =>
+                (message && Array.isArray(message.images) && message.images.length)
+                  ? { ...message, images: message.images.map((img) => ({ name: img.name, mimeType: img.mimeType })) }
+                  : message
+              )
+            }))
+          });
+        } catch {
+          return JSON.stringify(state);
+        }
+      }
+
       function saveState() {
         try {
-          localStorage.setItem(cloudStoreKey(), JSON.stringify(state));
+          localStorage.setItem(cloudStoreKey(), serialiseStateForStorage());
+        } catch (error) {
+          // Storage full or unavailable must NEVER break the app (e.g. sending a photo).
+          console.warn("Local save skipped:", error && error.message);
+        }
+        try {
           queueCloudSave();
-        } catch {
-          throw new Error("The browser could not save this much manual text. Try a smaller PDF or delete an older manual.");
+        } catch (error) {
+          console.warn("Cloud save skipped:", error && error.message);
         }
       }
 
@@ -2806,7 +2832,7 @@
           const movements = movementsFromRows(movementsResult.data || []);
           state.usageRecords = mergeById(movements.usageRecords, state.usageRecords);
           state.recommendationRecords = mergeById(movements.recommendationRecords, state.recommendationRecords);
-          localStorage.setItem(cloudStoreKey(), JSON.stringify(state));
+          try { localStorage.setItem(cloudStoreKey(), serialiseStateForStorage()); } catch (error) { console.warn("Local save skipped:", error && error.message); }
           cloudSaveSignature = cloudSyncSignature();
         } finally {
           isApplyingCloudState = false;
@@ -4586,10 +4612,11 @@
       }
 
       function renderMessagePhotos(images = []) {
-        if (!Array.isArray(images) || !images.length) return "";
+        const withData = (Array.isArray(images) ? images : []).filter((image) => image && image.dataUrl);
+        if (!withData.length) return "";
         return `
           <div class="message-photos">
-            ${images.map((image) => `<img src="${escapeHtml(image.dataUrl)}" alt="${escapeHtml(image.name || "Uploaded pool photo")}">`).join("")}
+            ${withData.map((image) => `<img src="${escapeHtml(image.dataUrl)}" alt="${escapeHtml(image.name || "Uploaded pool photo")}">`).join("")}
           </div>
         `;
       }
