@@ -214,8 +214,23 @@
         overflow-y: auto;
       }
 
+      .conversation-row {
+        display: flex;
+        align-items: center;
+        border-radius: 8px;
+      }
+
+      .conversation-row:hover {
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      .conversation-row.active {
+        background: rgba(255, 255, 255, 0.07);
+      }
+
       .conversation-button {
-        width: 100%;
+        flex: 1;
+        min-width: 0;
         min-height: 38px;
         padding: 8px 12px;
         border-color: transparent;
@@ -228,10 +243,46 @@
         white-space: nowrap;
       }
 
-      .conversation-button:hover {
-        border-color: transparent;
-        background: rgba(255, 255, 255, 0.04);
+      .conversation-row:hover .conversation-button,
+      .conversation-row.active .conversation-button {
         color: var(--ink);
+        background: transparent;
+      }
+
+      .conversation-row-actions {
+        display: flex;
+        gap: 2px;
+        padding-right: 6px;
+        opacity: 0;
+        transition: opacity 0.12s ease;
+      }
+
+      .conversation-row:hover .conversation-row-actions,
+      .conversation-row.active .conversation-row-actions {
+        opacity: 1;
+      }
+
+      .conversation-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 26px;
+        height: 26px;
+        padding: 0;
+        border: 0;
+        border-radius: 6px;
+        background: transparent;
+        color: var(--muted);
+        cursor: pointer;
+      }
+
+      .conversation-action:hover {
+        background: rgba(255, 255, 255, 0.10);
+        color: var(--ink);
+      }
+
+      @media (hover: none) {
+        .conversation-row-actions { opacity: 1; }
       }
 
       .conversation-empty {
@@ -555,6 +606,30 @@
         gap: 8px;
       }
 
+      .setup-nudge {
+        width: min(720px, 100%);
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 14px 16px;
+        border: 1px solid var(--brand);
+        border-radius: 12px;
+        background: rgba(47, 142, 255, 0.08);
+      }
+
+      .setup-nudge-copy { min-width: 220px; flex: 1; }
+      .setup-nudge-copy strong { display: block; margin-bottom: 2px; }
+      .setup-nudge-copy p { margin: 0; font-size: 0.84rem; }
+
+      .setup-nudge-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
       .prompt-card {
         min-height: 74px;
         border: 1px solid var(--line);
@@ -801,6 +876,12 @@
         border-color: var(--line);
         background: var(--surface);
         color: var(--brand-dark);
+      }
+
+      .feedback-button.active {
+        border-color: var(--brand);
+        background: rgba(47, 142, 255, 0.16);
+        color: var(--ink);
       }
 
       .tool-button.copied {
@@ -2032,7 +2113,7 @@
 
         <button class="secondary library-button" id="knowledgeButton" type="button">
           <strong>Manuals &amp; knowledge</strong>
-          <span id="knowledgeButtonSummary">0 manuals</span>
+          <span id="knowledgeButtonSummary">Manuals &amp; company knowledge</span>
         </button>
 
         <section class="side-section sidebar-history">
@@ -2086,7 +2167,7 @@
         <header class="chat-header">
           <div>
             <strong id="chatTitle">New pool service chat</strong>
-            <span>Ask naturally. Pool Pal uses your company settings and OpenAI guidance.</span>
+            <span>Ask naturally. Pool Pal uses your company settings, manuals, and learned knowledge.</span>
           </div>
           <button class="secondary" id="desktopNewChatButton" type="button">New chat</button>
         </header>
@@ -2258,10 +2339,10 @@
       </div>
       <div class="dialog-body">
         <div class="form-grid">
-          <label>Model
+          <label>Answer engine
             <select id="modelSelect">
-              <option value="gpt-5.4-mini">gpt-5.4-mini</option>
-              <option value="gpt-5.4">gpt-5.4</option>
+              <option value="gpt-5.4-mini">Fast (recommended)</option>
+              <option value="gpt-5.4">Detailed</option>
             </select>
           </label>
           <label>Response style
@@ -2404,7 +2485,7 @@
               <h3>Built-in manuals</h3>
               <input id="manualSearch" class="inline-search" placeholder="Search">
             </div>
-            <p class="muted" style="margin:0 0 8px; font-size:0.82rem;">27 common manuals included with Pool Pal — cited automatically when a question mentions the equipment. Your uploads appear below.</p>
+            <p class="muted" id="builtinManualsNote" style="margin:0 0 8px; font-size:0.82rem;">Common manuals included with Pool Pal — cited automatically when a question mentions the equipment. Your uploads appear below.</p>
             <div class="manual-list" id="libraryList"></div>
             <div class="manual-list" id="manualList"></div>
           </section>
@@ -2412,7 +2493,7 @@
 
         <div class="knowledge-panel" data-kpanel="knowledge" hidden>
           <p class="knowledge-intro">Your company's procedures and the fixes your team has taught Pool Pal — it uses these before generic advice.</p>
-          <details class="add-collapse admin-only" id="addKnowledgeCollapse">
+          <details class="add-collapse" id="addKnowledgeCollapse">
             <summary><span class="add-collapse-plus">+</span> Add knowledge</summary>
             <div class="add-collapse-body">
               <label class="full">Title
@@ -2468,55 +2549,12 @@
       </div>
     </dialog>
 
-    <dialog id="stockDialog">
-      <div class="dialog-head">
-        <div>
-          <div class="label">Stock & usage</div>
-          <h2>Chemical stock and weekly variance</h2>
-        </div>
-        <button class="icon" id="closeStockButton" type="button" aria-label="Close stock and usage">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M18 6 6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-        </button>
-      </div>
-      <div class="dialog-body">
-        <section>
-          <h2>This week</h2>
-          <div class="summary-grid">
-            <div class="summary-card"><span>Recommended cost</span><strong id="recommendedCost">$0.00</strong></div>
-            <div class="summary-card"><span>Actual cost</span><strong id="actualCost">$0.00</strong></div>
-            <div class="summary-card"><span>Net variance</span><strong id="varianceCost">$0.00</strong></div>
-            <div class="summary-card"><span>Overuse cost</span><strong id="overuseCost">$0.00</strong></div>
-          </div>
-        </section>
-
-        <section>
-          <h2>Current vehicle stock</h2>
-          <div class="stock-grid" id="stockEditor"></div>
-        </section>
-
-        <section>
-          <h2>Past weeks</h2>
-          <div class="week-list" id="weekList"></div>
-        </section>
-
-        <section>
-          <h2>Recent chemical usage</h2>
-          <div class="usage-list" id="usageList"></div>
-        </section>
-      </div>
-      <div class="dialog-foot">
-        <button class="secondary" id="clearUsageButton" type="button">Clear usage</button>
-        <button class="primary" id="saveStockButton" type="button">Save stock</button>
-      </div>
-    </dialog>
-
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script>
       const STORE_KEY = "pool-pal:chat-ai";
       const WELCOME_DISMISSED_KEY = "pool-pal:welcome-dismissed";
+      const SETUP_DISMISSED_KEY = "pool-pal:setup-dismissed";
       const MAX_MANUAL_TEXT_CHARS = 180000;
       const MAX_CHAT_HISTORY_MESSAGES = 8;
       const MAX_CHAT_IMAGES = 2;
@@ -4570,6 +4608,11 @@
       }
 
       function renderKnowledgeDialog() {
+        const builtinNote = document.querySelector("#builtinManualsNote");
+        if (builtinNote) {
+          const builtinCount = manualLibraryIndex.length;
+          builtinNote.textContent = `${builtinCount} common manual${builtinCount === 1 ? "" : "s"} included with Pool Pal — cited automatically when a question mentions the equipment. Your uploads appear below.`;
+        }
         const query = els.manualSearch.value.trim().toLowerCase();
         const manuals = state.manuals
           .filter((manual) => !query || manualMetaText(manual).toLowerCase().includes(query))
@@ -4637,6 +4680,7 @@
           const created = entry.createdDate ? new Date(entry.createdDate).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" }) : "";
           const source = entry.source === "Technician Improvement" ? "Taught via Improve answer"
             : entry.source === "Company procedure" ? "Company procedure"
+            : entry.source === "Added by technician" ? "Added by technician"
             : "Added by admin";
           const meta = [source, created].filter(Boolean).join(" · ");
 
@@ -4731,6 +4775,7 @@
       }
 
       function deleteKnowledgeEntry(id) {
+        if (!isAdmin()) return;
         const entry = state.companyKnowledgeEntries.find((item) => item.id === id);
         if (!entry) return;
         if (!confirm(`Delete ${entry.title}?`)) return;
@@ -5206,9 +5251,19 @@
 
         els.conversationList.innerHTML = chats.length
           ? chats.map((chat) => `
-            <button class="conversation-button ${chat.id === state.activeId ? "active" : ""}" type="button" data-chat-id="${chat.id}">
-              ${escapeHtml(chat.title)}
-            </button>
+            <div class="conversation-row ${chat.id === state.activeId ? "active" : ""}">
+              <button class="conversation-button" type="button" data-chat-id="${chat.id}">
+                ${escapeHtml(chat.title)}
+              </button>
+              <div class="conversation-row-actions">
+                <button class="conversation-action" type="button" data-rename-chat="${chat.id}" title="Rename chat" aria-label="Rename chat">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <button class="conversation-action" type="button" data-delete-chat="${chat.id}" title="Delete chat" aria-label="Delete chat">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+              </div>
+            </div>
           `).join("")
           : `<div class="conversation-empty">${query ? "No chats match" : "No chats yet"}</div>`;
 
@@ -5219,6 +5274,13 @@
             renderAll();
             closeSidebar();
           });
+        });
+
+        document.querySelectorAll("[data-rename-chat]").forEach((button) => {
+          button.addEventListener("click", (event) => { event.stopPropagation(); renameConversation(button.dataset.renameChat); });
+        });
+        document.querySelectorAll("[data-delete-chat]").forEach((button) => {
+          button.addEventListener("click", (event) => { event.stopPropagation(); deleteConversation(button.dataset.deleteChat); });
         });
 
         renderProfileRow();
@@ -5243,6 +5305,7 @@
       }
 
       function renderStockDialog() {
+        if (!els.stockDialog) return; // Stock & usage UI removed; function kept as a harmless no-op.
         const week = weeklySummary();
         document.querySelector("#recommendedCost").textContent = money(week.recommendedCost);
         document.querySelector("#actualCost").textContent = money(week.actualCost);
@@ -5313,6 +5376,19 @@
                 <h2>Ask Pool Pal anything</h2>
                 <p class="muted">Real AI guidance for pool technicians, using your company settings.</p>
               </div>
+              ${showSetupNudge() ? `
+              <div class="setup-nudge">
+                <div class="setup-nudge-copy">
+                  <strong>Finish setting up Pool Pal</strong>
+                  <p class="muted">Add your company's chemical targets, manuals, and procedures so every answer matches how your team works.</p>
+                </div>
+                <div class="setup-nudge-actions">
+                  <button class="primary" type="button" id="setupSettingsBtn">Company settings</button>
+                  <button class="secondary" type="button" id="setupKnowledgeBtn">Manuals &amp; knowledge</button>
+                  <button class="link-button" type="button" id="setupDismissBtn">Dismiss</button>
+                </div>
+              </div>
+              ` : ""}
               <div class="prompt-grid">
                 <button class="prompt-card" type="button" data-prompt="The pool is green, chlorine is zero, the chlorinator says low flow and I can't get the pump to prime.">Diagnose a field problem<span>Green pool, low flow, pump prime</span></button>
                 <button class="prompt-card" type="button" data-prompt="The pool is 7 metres by 3 metres and 1.5 metres deep. pH is 7.8, chlorine is 0.5 and alkalinity is 94. What should I add?">Calculate chemical guidance<span>Readings, volume, warnings</span></button>
@@ -5334,6 +5410,8 @@
               <div class="message-tools">
                 <button class="tool-button" type="button" data-copy-answer="${index}" title="Copy answer">📋 Copy Answer</button>
                 <button class="tool-button" type="button" data-improve-answer="${index}" title="Improve answer">✏️ Improve Answer</button>
+                <button class="tool-button feedback-button ${message.feedback === "up" ? "active" : ""}" type="button" data-feedback-up="${index}" title="Good answer" aria-label="Good answer">👍</button>
+                <button class="tool-button feedback-button ${message.feedback === "down" ? "active" : ""}" type="button" data-feedback-down="${index}" title="Needs work" aria-label="Needs work">👎</button>
               </div>
             ` : ""}
           </article>
@@ -5361,6 +5439,24 @@
         document.querySelectorAll("[data-view-page]").forEach((button) => {
           button.addEventListener("click", () => renderManualPage(button));
         });
+
+        document.querySelectorAll("[data-feedback-up]").forEach((button) => {
+          button.addEventListener("click", () => setAnswerFeedback(Number(button.dataset.feedbackUp), "up"));
+        });
+        document.querySelectorAll("[data-feedback-down]").forEach((button) => {
+          button.addEventListener("click", () => setAnswerFeedback(Number(button.dataset.feedbackDown), "down"));
+        });
+      }
+
+      function setAnswerFeedback(index, value) {
+        const chat = activeConversation();
+        const message = chat.messages[index];
+        if (!message || message.role !== "assistant") return;
+        message.feedback = message.feedback === value ? null : value;
+        saveState();
+        renderMessages();
+        // A thumbs-down is the moment to capture what should have been better.
+        if (message.feedback === "down") openImproveDialog(index);
       }
 
       function renderAll() {
@@ -5369,9 +5465,20 @@
         renderKnowledgeButton();
       }
 
+      function showSetupNudge() {
+        try { if (localStorage.getItem(SETUP_DISMISSED_KEY)) return false; } catch (error) {}
+        return isAdmin() && (state.companyKnowledgeEntries?.length || 0) === 0;
+      }
+
       function bindPromptCards() {
         document.querySelectorAll("[data-prompt]").forEach((button) => {
           button.addEventListener("click", () => sendMessage(button.dataset.prompt));
+        });
+        document.querySelector("#setupSettingsBtn")?.addEventListener("click", openSettings);
+        document.querySelector("#setupKnowledgeBtn")?.addEventListener("click", openKnowledgeDialog);
+        document.querySelector("#setupDismissBtn")?.addEventListener("click", () => {
+          try { localStorage.setItem(SETUP_DISMISSED_KEY, "1"); } catch (error) {}
+          renderMessages();
         });
       }
 
@@ -5489,6 +5596,34 @@
         renderAll();
         closeSidebar();
         els.messageInput.focus();
+      }
+
+      function renameConversation(id) {
+        const chat = state.conversations.find((item) => item.id === id);
+        if (!chat) return;
+        const next = prompt("Rename chat", chat.title);
+        if (next === null) return;
+        const trimmed = next.trim();
+        if (!trimmed) return;
+        chat.title = trimmed.slice(0, 80);
+        saveState();
+        renderAll();
+      }
+
+      function deleteConversation(id) {
+        const chat = state.conversations.find((item) => item.id === id);
+        if (!chat) return;
+        if (!confirm(`Delete "${chat.title}"? This can't be undone.`)) return;
+        state.conversations = state.conversations.filter((item) => item.id !== id);
+        if (!state.conversations.length) {
+          const fresh = createConversation();
+          state.conversations.push(fresh);
+          state.activeId = fresh.id;
+        } else if (state.activeId === id) {
+          state.activeId = state.conversations[0].id;
+        }
+        saveState();
+        renderAll();
       }
 
       function updateTitle(chat, content) {
@@ -5925,6 +6060,7 @@
       }
 
       function openStockDialog() {
+        if (!els.stockDialog) return; // Stock & usage UI removed.
         if (!requireCloudLogin()) return;
         renderStockDialog();
         els.stockDialog.showModal();
@@ -5986,7 +6122,8 @@
 
       // Company knowledge = a list of editable entries (procedures + "Improve answer" tips).
       function addOrUpdateKnowledgeEntry() {
-        if (!isAdmin()) return;
+        // Editing an existing entry is admin-only; adding new knowledge is open to technicians too.
+        if (editingKnowledgeId && !isAdmin()) return;
         const title = document.querySelector("#knowledgeEntryTitle").value.trim();
         const text = document.querySelector("#knowledgeEntryText").value.trim();
         const status = document.querySelector("#knowledgeSaveStatus");
@@ -6012,8 +6149,8 @@
             equipmentBrand: "",
             issueCategory: "Company knowledge",
             knowledgeEntry: text,
-            source: "Added by admin",
-            createdBy: "Admin",
+            source: isAdmin() ? "Added by admin" : "Added by technician",
+            createdBy: isAdmin() ? "Admin" : "Technician",
             createdDate: now,
             lastModifiedDate: now
           });
@@ -6025,6 +6162,7 @@
       }
 
       function editKnowledgeEntry(id) {
+        if (!isAdmin()) return;
         const entry = state.companyKnowledgeEntries.find((item) => item.id === id);
         if (!entry) return;
         editingKnowledgeId = id;
@@ -6664,16 +6802,18 @@
         button.addEventListener("click", () => setKnowledgeTab(button.dataset.ktab));
       });
       document.querySelector("#saveKnowledgeButton")?.addEventListener("click", saveCompanyKnowledge);
+      // Auto-save Tone & preferences on blur so edits aren't lost by closing without pressing Save.
+      document.querySelector("#companyKnowledge")?.addEventListener("blur", () => { if (isAdmin()) saveCompanyKnowledge(); });
       document.querySelector("#addKnowledgeButton")?.addEventListener("click", addOrUpdateKnowledgeEntry);
       document.querySelector("#closeImproveButton").addEventListener("click", closeImproveDialog);
       document.querySelector("#cancelImproveButton").addEventListener("click", closeImproveDialog);
       document.querySelector("#saveImproveButton").addEventListener("click", saveImprovement);
-      document.querySelector("#closeStockButton").addEventListener("click", () => els.stockDialog.close());
-      document.querySelector("#saveStockButton").addEventListener("click", saveStock);
+      document.querySelector("#closeStockButton")?.addEventListener("click", () => els.stockDialog?.close());
+      document.querySelector("#saveStockButton")?.addEventListener("click", saveStock);
       document.querySelector("#teamButton").addEventListener("click", openTeamDialog);
       document.querySelector("#closeTeamButton").addEventListener("click", () => els.teamDialog.close());
       document.querySelector("#sendInviteButton").addEventListener("click", sendInvite);
-      document.querySelector("#clearUsageButton").addEventListener("click", clearUsage);
+      document.querySelector("#clearUsageButton")?.addEventListener("click", clearUsage);
       document.querySelector("#closeSettingsButton").addEventListener("click", () => els.settingsDialog.close());
       document.querySelector("#saveSettingsButton").addEventListener("click", saveSettings);
       ["#messageTone", "#messageGreeting", "#messageSignoff", "#messageTemplate"].forEach((selector) => {
