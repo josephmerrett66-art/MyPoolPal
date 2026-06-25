@@ -655,7 +655,7 @@ function buildInstructions(context = {}) {
       : "Customer message mode: not detected. Only write customer-facing wording if the technician asks for it.",
     `Company customer message format:\n${messageFormatText}`,
     "Company guidance priority: if company procedures, extra company knowledge, or learned company knowledge are relevant to the technician's readings or symptoms, treat them as mandatory operating guidance and apply them before generic pool advice. Do not ignore a relevant company rule just because the technician did not ask about it directly.",
-    `Sanitiser system for this pool: ${safeContext.systemType || "Standard salt chlorinator"}. ${safeContext.systemChemistryNote || "Use standard salt-pool chemistry."} Use the chemistry language and target ranges that match this system — for a freshwater/mineral system talk in TDS and mineral level (free chlorine near zero is normal), not salt and stabiliser.`,
+    `Sanitiser system for this pool: ${safeContext.systemType || "Standard salt chlorinator"}. ${safeContext.systemChemistryNote || "Use standard salt-pool chemistry."} Use the target ranges that match this system, and always answer in the same unit the technician actually measured — if they give a salt reading, judge it against the salt/mineral target rather than insisting on TDS. For a freshwater/mineral system, free chlorine near zero is normal and the dissolved-solids level is much lower than a standard salt pool.`,
     `Company chemical targets for this system: ${JSON.stringify(safeContext.targets)}.`,
     `Detected company reading alerts: ${readingAlerts || "No automatic reading-specific company alert detected."}`,
     `Company procedures: ${safeContext.companyProcedures || "No company procedures provided."}`,
