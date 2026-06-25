@@ -2585,6 +2585,34 @@
               </div>
             </div>
           </details>
+          <details class="add-collapse" id="addProcedureCollapse">
+            <summary><span class="add-collapse-plus">+</span> Add a procedure (template)</summary>
+            <div class="add-collapse-body">
+              <p class="muted" style="margin:0 0 4px; font-size:0.82rem;">A guided template for a step-by-step company procedure. Fill what's relevant — Pool Pal follows these before generic advice.</p>
+              <label class="full">Procedure name
+                <input id="procName" placeholder="Green pool recovery">
+              </label>
+              <label class="full">When to use it
+                <input id="procWhen" placeholder="Pool is green / heavy algae / chlorine reads zero">
+              </label>
+              <label class="full">Equipment or pool type (optional)
+                <input id="procEquipment" placeholder="Any pool / salt pool / specific chlorinator">
+              </label>
+              <label class="full">Steps — one per line
+                <textarea id="procSteps" rows="6" placeholder="Check and clean skimmer, pump basket and filter&#10;Balance pH to 7.2–7.6&#10;Brush walls and floor&#10;Dose chlorine in stages&#10;Run pump continuously 24–48h&#10;Retest and reassess"></textarea>
+              </label>
+              <label class="full">Safety / warnings (optional)
+                <textarea id="procSafety" rows="2" placeholder="Never mix chemicals. Add acid and chlorine separately, hours apart."></textarea>
+              </label>
+              <label class="full">Escalate if (optional)
+                <input id="procEscalate" placeholder="Still green after 48h, or an equipment fault is found">
+              </label>
+              <div class="dialog-foot" style="padding-inline:0;background:transparent;border:0;">
+                <div class="upload-status" id="procSaveStatus"></div>
+                <button class="primary" id="addProcedureButton" type="button">Add procedure</button>
+              </div>
+            </div>
+          </details>
           <div class="learned-list" id="learnedKnowledgeList"></div>
         </div>
 
@@ -6365,6 +6393,7 @@
         document.querySelector("#companyKnowledge").value = state.settings.companyKnowledge || "";
         document.querySelector("#companyKnowledge").disabled = !admin;
         resetKnowledgeEntryForm();
+        resetProcedureForm();
         setKnowledgeTab("manuals");
         renderKnowledgeDialog();
         els.knowledgeDialog.showModal();
@@ -6456,12 +6485,110 @@
         if (!isAdmin()) return;
         const entry = state.companyKnowledgeEntries.find((item) => item.id === id);
         if (!entry) return;
+        // Structured procedures reopen in the template; everything else in the freeform form.
+        if (entry.procedure) { editProcedureEntry(entry); return; }
+        editingProcedureId = null;
         editingKnowledgeId = id;
         document.querySelector("#knowledgeEntryTitle").value = entry.title || "";
         document.querySelector("#knowledgeEntryText").value = entry.knowledgeEntry || "";
         document.querySelector("#addKnowledgeButton").textContent = "Save changes";
         document.querySelector("#addKnowledgeCollapse").open = true;
         document.querySelector("#knowledgeEntryTitle").focus();
+      }
+
+      // ----- Structured company-procedure template -----
+      let editingProcedureId = null;
+      const PROCEDURE_FIELD_IDS = ["procName", "procWhen", "procEquipment", "procSteps", "procSafety", "procEscalate"];
+
+      function assembleProcedureText(name, proc) {
+        const lines = [];
+        if (name) lines.push(`Procedure: ${name}`);
+        if (proc.when) lines.push(`When to use: ${proc.when}`);
+        if (proc.equipment) lines.push(`Equipment / pool type: ${proc.equipment}`);
+        const steps = (proc.steps || []).filter(Boolean);
+        if (steps.length) {
+          lines.push("Steps:");
+          steps.forEach((step, index) => lines.push(`${index + 1}. ${step}`));
+        }
+        if (proc.safety) lines.push(`Safety: ${proc.safety}`);
+        if (proc.escalate) lines.push(`Escalate if: ${proc.escalate}`);
+        return lines.join("\n");
+      }
+
+      function addOrUpdateProcedure() {
+        if (editingProcedureId && !isAdmin()) return;
+        const name = document.querySelector("#procName").value.trim();
+        const steps = document.querySelector("#procSteps").value.split("\n").map((line) => line.trim()).filter(Boolean);
+        const status = document.querySelector("#procSaveStatus");
+        if (!name || !steps.length) {
+          if (status) status.textContent = "Add a procedure name and at least one step.";
+          return;
+        }
+        const proc = {
+          when: document.querySelector("#procWhen").value.trim(),
+          equipment: document.querySelector("#procEquipment").value.trim(),
+          steps,
+          safety: document.querySelector("#procSafety").value.trim(),
+          escalate: document.querySelector("#procEscalate").value.trim()
+        };
+        const text = assembleProcedureText(name, proc);
+        const now = new Date().toISOString();
+        state.companyKnowledgeEntries = state.companyKnowledgeEntries || [];
+        if (editingProcedureId) {
+          const entry = state.companyKnowledgeEntries.find((item) => item.id === editingProcedureId);
+          if (entry) {
+            entry.title = name;
+            entry.knowledgeEntry = text;
+            entry.procedure = proc;
+            entry.equipmentType = proc.equipment || "General";
+            entry.lastModifiedDate = now;
+          }
+        } else {
+          state.companyKnowledgeEntries.unshift({
+            id: createId(),
+            companyId: "local-company",
+            title: name,
+            equipmentType: proc.equipment || "General",
+            equipmentBrand: "",
+            issueCategory: "Procedure",
+            knowledgeEntry: text,
+            procedure: proc,
+            source: "Company procedure",
+            createdBy: isAdmin() ? "Admin" : "Technician",
+            createdDate: now,
+            lastModifiedDate: now
+          });
+        }
+        resetProcedureForm();
+        saveState();
+        renderKnowledgeButton();
+        renderKnowledgeDialog();
+      }
+
+      function resetProcedureForm() {
+        editingProcedureId = null;
+        PROCEDURE_FIELD_IDS.forEach((id) => { const el = document.querySelector("#" + id); if (el) el.value = ""; });
+        const button = document.querySelector("#addProcedureButton");
+        const collapse = document.querySelector("#addProcedureCollapse");
+        const status = document.querySelector("#procSaveStatus");
+        if (button) button.textContent = "Add procedure";
+        if (collapse) collapse.open = false;
+        if (status) status.textContent = "";
+      }
+
+      function editProcedureEntry(entry) {
+        editingKnowledgeId = null;
+        editingProcedureId = entry.id;
+        const proc = entry.procedure || {};
+        document.querySelector("#procName").value = entry.title || "";
+        document.querySelector("#procWhen").value = proc.when || "";
+        document.querySelector("#procEquipment").value = proc.equipment || "";
+        document.querySelector("#procSteps").value = (proc.steps || []).join("\n");
+        document.querySelector("#procSafety").value = proc.safety || "";
+        document.querySelector("#procEscalate").value = proc.escalate || "";
+        document.querySelector("#addProcedureButton").textContent = "Save changes";
+        document.querySelector("#addProcedureCollapse").open = true;
+        document.querySelector("#procName").focus();
       }
 
       // One-time: fold the old single-textarea company procedures into the entry list.
@@ -7098,6 +7225,7 @@
       // Auto-save Tone & preferences on blur so edits aren't lost by closing without pressing Save.
       document.querySelector("#companyKnowledge")?.addEventListener("blur", () => { if (isAdmin()) saveCompanyKnowledge(); });
       document.querySelector("#addKnowledgeButton")?.addEventListener("click", addOrUpdateKnowledgeEntry);
+      document.querySelector("#addProcedureButton")?.addEventListener("click", addOrUpdateProcedure);
       document.querySelector("#closeImproveButton").addEventListener("click", closeImproveDialog);
       document.querySelector("#cancelImproveButton").addEventListener("click", closeImproveDialog);
       document.querySelector("#saveImproveButton").addEventListener("click", saveImprovement);
