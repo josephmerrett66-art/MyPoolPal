@@ -571,6 +571,14 @@
         color: var(--muted);
       }
 
+      .system-auto-hint {
+        font-size: 0.76rem;
+        color: var(--brand);
+        background: rgba(47, 142, 255, 0.12);
+        border-radius: var(--radius);
+        padding: 3px 8px;
+      }
+
       .chat-system-picker select {
         min-height: 32px;
         padding: 4px 8px;
@@ -2229,6 +2237,7 @@
             <span>System</span>
             <select id="chatSystemType" aria-label="Sanitiser system for this pool"></select>
           </label>
+          <span class="system-auto-hint" id="systemAutoHint" hidden></span>
         </div>
 
         <main class="messages" id="messages" aria-live="polite"></main>
@@ -2743,6 +2752,42 @@
           mineral: values.mineral,
           chemistryNote: meta.chemistryNote
         };
+      }
+
+      // Phase 3: infer the pool's sanitiser system from the technician's wording or the
+      // matched manual. Only returns a non-default system when there's a clear signal —
+      // standard salt stays the implicit default (we never auto-force back to it).
+      const FRESHWATER_SYSTEM_TERMS = [
+        "naked", "nkd", "freshwater", "fresh water", "mineral pool", "mineral swim",
+        "mineral chlorinat", "magnesium", "maytronics mineral", "oxypool"
+      ];
+      function detectSanitiserSystem(question, manualReference) {
+        const q = String(question || "").toLowerCase();
+        if (FRESHWATER_SYSTEM_TERMS.some((term) => q.includes(term))) return "freshwater-mineral";
+        const manualId = String(manualReference?.manualId || "").toLowerCase();
+        if (manualId.startsWith("naked")) return "freshwater-mineral";
+        return null;
+      }
+
+      // Apply auto-detection unless the technician has manually locked this chat's system.
+      function maybeAutoDetectSystem(question, manualReference) {
+        const chat = activeConversation();
+        if (!chat || chat.systemTypeLocked) return;
+        const detected = detectSanitiserSystem(question, manualReference);
+        if (detected && detected !== chat.systemType) {
+          chat.systemType = detected;
+          renderChatSystemPicker();
+          showSystemAutoHint(SYSTEM_PROFILES[detected]?.label);
+        }
+      }
+
+      function showSystemAutoHint(label) {
+        const hint = document.querySelector("#systemAutoHint");
+        if (!hint || !label) return;
+        hint.textContent = `Set to ${label} from your message`;
+        hint.hidden = false;
+        clearTimeout(showSystemAutoHint._t);
+        showSystemAutoHint._t = setTimeout(() => { hint.hidden = true; }, 6000);
       }
 
       // One-time: seed the standard-salt profile from the company's existing flat targets
@@ -5647,6 +5692,9 @@
         const chat = activeConversation();
         if (!chat || !SYSTEM_PROFILES[systemType]) return;
         chat.systemType = systemType;
+        chat.systemTypeLocked = true; // explicit choice wins over auto-detection
+        const hint = document.querySelector("#systemAutoHint");
+        if (hint) hint.hidden = true;
         saveState();
       }
 
@@ -6027,6 +6075,7 @@
           await ensureLibraryManualsForQuestion(clean);
           await ensureQuestionVector(clean);
           let manualReference = manualRetrievalForQuestion(clean);
+          maybeAutoDetectSystem(clean, manualReference);
           const response = await fetch("/api/chat", {
             method: "POST",
             headers: await apiHeaders({ "Content-Type": "application/json" }),
