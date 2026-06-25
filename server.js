@@ -331,6 +331,9 @@ Safety and quality rules:
 - avoid section labels like "Recommendation", "Warning", "Next step", or "Field checks" unless they make the answer much clearer
 - when writing a customer-facing message, output the message itself in the company's style and keep it ready to copy into SMS, email, or ServiceM8
 - do not end with generic offers like "if you want, I can..."
+- when your answer recommends adding or adjusting chemicals (including when reading a photo of a test strip, test kit, or pool water), begin with ONE line that starts exactly with "SUMMARY: " followed by a single plain-language sentence saying what to add and roughly how much, and what to retest. Then a blank line, then the detail below.
+- only include the SUMMARY line when the answer actually recommends chemical additions or adjustments; never add it to non-chemical answers.
+- cut the jargon: lead with what to do, not the chemistry theory. Prefer plain words, and when a technical term is unavoidable (CYA, TDS, ORP, LSI) add a short plain gloss in brackets the first time, e.g. "stabiliser (CYA)" or "total dissolved solids (TDS)".
 
 Stock action rules:
 - Stock tracking is currently not part of the main Pool Pal experience.
@@ -611,11 +614,16 @@ function buildInstructions(context = {}) {
     pH: truncateText(rawTargets.pH, 20),
     chlorine: truncateText(rawTargets.chlorine, 20),
     alkalinity: truncateText(rawTargets.alkalinity, 20),
-    maxAcidMl: truncateText(rawTargets.maxAcidMl, 20)
+    maxAcidMl: truncateText(rawTargets.maxAcidMl, 20),
+    salt: truncateText(rawTargets.salt, 30),
+    tds: truncateText(rawTargets.tds, 30),
+    mineral: truncateText(rawTargets.mineral, 30)
   };
   const safeContext = {
     responseStyle: context.responseStyle || "Short field answer",
     assistantName: truncateText(context.assistantName || "Pool Pal", 40),
+    systemType: truncateText(context.systemType, 60),
+    systemChemistryNote: truncateText(context.systemChemistryNote, 400),
     targets,
     companyProcedures: truncateText(context.companyProcedures, 1400),
     companyKnowledge: truncateText(context.companyKnowledge, 1400),
@@ -647,7 +655,8 @@ function buildInstructions(context = {}) {
       : "Customer message mode: not detected. Only write customer-facing wording if the technician asks for it.",
     `Company customer message format:\n${messageFormatText}`,
     "Company guidance priority: if company procedures, extra company knowledge, or learned company knowledge are relevant to the technician's readings or symptoms, treat them as mandatory operating guidance and apply them before generic pool advice. Do not ignore a relevant company rule just because the technician did not ask about it directly.",
-    `Company chemical targets: ${JSON.stringify(safeContext.targets)}.`,
+    `Sanitiser system for this pool: ${safeContext.systemType || "Standard salt chlorinator"}. ${safeContext.systemChemistryNote || "Use standard salt-pool chemistry."} Use the chemistry language and target ranges that match this system — for a freshwater/mineral system talk in TDS and mineral level (free chlorine near zero is normal), not salt and stabiliser.`,
+    `Company chemical targets for this system: ${JSON.stringify(safeContext.targets)}.`,
     `Detected company reading alerts: ${readingAlerts || "No automatic reading-specific company alert detected."}`,
     `Company procedures: ${safeContext.companyProcedures || "No company procedures provided."}`,
     `Extra company knowledge: ${safeContext.companyKnowledge || "No extra company knowledge provided."}`,

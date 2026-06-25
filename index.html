@@ -555,6 +555,33 @@
         padding: 16px clamp(16px, 4vw, 34px);
       }
 
+      .chat-subbar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px clamp(16px, 4vw, 34px);
+        border-bottom: 1px solid var(--line);
+      }
+
+      .chat-system-picker {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.78rem;
+        color: var(--muted);
+      }
+
+      .chat-system-picker select {
+        min-height: 32px;
+        padding: 4px 8px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--surface);
+        color: var(--ink);
+        font-size: 0.82rem;
+        font-weight: 600;
+      }
+
       .chat-header strong {
         display: block;
         font-size: 1rem;
@@ -689,6 +716,31 @@
         padding: 14px 16px;
         line-height: 1.55;
         box-shadow: var(--shadow-soft);
+      }
+
+      .action-summary {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        margin-bottom: 12px;
+        padding: 11px 13px;
+        border: 1px solid var(--brand);
+        border-radius: var(--radius);
+        background: rgba(47, 142, 255, 0.12);
+      }
+
+      .action-summary-label {
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--brand);
+      }
+
+      .action-summary-text {
+        font-size: 0.98rem;
+        font-weight: 700;
+        color: var(--ink);
       }
 
       .user .bubble {
@@ -2172,6 +2224,13 @@
           <button class="secondary" id="desktopNewChatButton" type="button">New chat</button>
         </header>
 
+        <div class="chat-subbar">
+          <label class="chat-system-picker" title="Sanitiser system for this pool — sets the target levels Pool Pal aims for">
+            <span>System</span>
+            <select id="chatSystemType" aria-label="Sanitiser system for this pool"></select>
+          </label>
+        </div>
+
         <main class="messages" id="messages" aria-live="polite"></main>
 
         <div class="composer-wrap">
@@ -2355,10 +2414,19 @@
           <label>AI technician name
             <input id="assistantName" maxlength="40" placeholder="Pool Pal">
           </label>
-          <label>Target pH <input id="targetPh" inputmode="decimal"></label>
-          <label>Target chlorine ppm <input id="targetChlorine" inputmode="decimal"></label>
-          <label>Target alkalinity ppm <input id="targetAlkalinity" inputmode="decimal"></label>
-          <label>Max acid dose ml <input id="maxAcid" inputmode="decimal"></label>
+          <div class="settings-section" id="systemTargetsSection">
+            <div>
+              <h3>Chemical targets by system</h3>
+              <p class="muted">Different sanitiser systems need different levels (a freshwater/mineral pool is nothing like a salt pool). Set targets per system, and choose which one new chats start on. Each chat's system is picked from the bar above the conversation.</p>
+            </div>
+            <label>Default system for new chats
+              <select id="defaultSystemType"></select>
+            </label>
+            <label>Edit targets for
+              <select id="editSystemType"></select>
+            </label>
+            <div class="form-grid" id="systemTargetFields"></div>
+          </div>
           <div class="settings-section">
             <div>
               <h3>Customer message format</h3>
@@ -2605,6 +2673,11 @@
         targetChlorine: "3",
         targetAlkalinity: "120",
         maxAcid: "2000",
+        defaultSystemType: "standard-salt",
+        systemProfiles: {
+          "standard-salt": { pH: "7.4", chlorine: "3", alkalinity: "120", maxAcid: "2000", salt: "3500–5000 ppm", tds: "", mineral: "" },
+          "freshwater-mineral": { pH: "7.0–7.6", chlorine: "0–0.5 ppm", alkalinity: "100–150 ppm", maxAcid: "2000", salt: "500–700 ppm mineral salt", tds: "800–1200 ppm", mineral: "500–700 ppm" }
+        },
         companyProcedures: "Green pool: check circulation first, clean baskets/filter, balance pH, brush, dose chlorine in stages, run pump continuously, return or escalate if still green. Low flow or priming: check water level, skimmer/pump baskets, valves, lid O-ring, suction leaks, filter pressure, and do not run pump dry.",
         vehicleStock: "Liquid chlorine, acid, bicarb, salt, stabiliser. Track recommended versus actual additions when a technician reports usage.",
         companyKnowledge: "Use Australian pool service terminology. Be practical, field-friendly, and clear about uncertainty.",
@@ -2621,6 +2694,73 @@
         salt: { label: "Salt", unit: "kg", amount: 80, cost: 0.55 },
         stabiliser: { label: "Stabiliser", unit: "kg", amount: 5, cost: 8.5 }
       };
+
+      // Sanitiser-system target profiles. "standard-salt" reads its core targets from
+      // the company's flat settings (the existing Settings inputs); "freshwater-mineral"
+      // is a preset grounded in the Naked NKD manuals (TDS/mineral driven, near-zero FC).
+      const DEFAULT_SYSTEM_TYPE = "standard-salt";
+      // Editable target fields shown per profile, in display order.
+      const SYSTEM_TARGET_FIELDS = [
+        { key: "pH", label: "Target pH" },
+        { key: "chlorine", label: "Free chlorine" },
+        { key: "alkalinity", label: "Alkalinity" },
+        { key: "salt", label: "Salt / mineral" },
+        { key: "tds", label: "TDS" },
+        { key: "maxAcid", label: "Max acid dose (ml)" }
+      ];
+      const SYSTEM_PROFILES = {
+        "standard-salt": {
+          label: "Standard salt chlorinator",
+          // which target fields are relevant for this system (others hidden in the editor)
+          fields: ["pH", "chlorine", "alkalinity", "salt", "maxAcid"],
+          chemistryNote: "Standard salt chlorinator. Maintain free chlorine 1–3 ppm and stabiliser (CYA) 30–50 ppm; keep salt to the cell's spec (typically 3500–5000 ppm). Talk in terms of salt, free chlorine and stabiliser."
+        },
+        "freshwater-mineral": {
+          label: "Freshwater / mineral (Naked)",
+          fields: ["pH", "chlorine", "alkalinity", "tds", "salt", "maxAcid"],
+          chemistryNote: "Freshwater / mineral oxidiser-ion system (e.g. Naked NKD). Target TDS 800–1200 ppm and mineral salt 500–700 ppm; free chlorine sits near 0 because the oxidiser/ion cell does the sanitising. Do NOT target salt 3000+ ppm or high stabiliser. Talk in terms of TDS and mineral level, not salt and CYA. Keep pH in range for a balanced LSI."
+        }
+      };
+
+      function profileValues(systemType, settings = {}) {
+        const stored = settings.systemProfiles?.[systemType];
+        const fallback = DEFAULT_SETTINGS.systemProfiles?.[systemType] || {};
+        return { ...fallback, ...(stored || {}) };
+      }
+
+      function resolveSystemTargets(systemType, settings = {}) {
+        const profile = SYSTEM_PROFILES[systemType] ? systemType : DEFAULT_SYSTEM_TYPE;
+        const meta = SYSTEM_PROFILES[profile];
+        const values = profileValues(profile, settings);
+        return {
+          systemType: meta.label,
+          pH: values.pH,
+          chlorine: values.chlorine,
+          alkalinity: values.alkalinity,
+          maxAcidMl: values.maxAcid,
+          salt: values.salt,
+          tds: values.tds,
+          mineral: values.mineral,
+          chemistryNote: meta.chemistryNote
+        };
+      }
+
+      // One-time: seed the standard-salt profile from the company's existing flat targets
+      // so any previously tuned numbers carry over to the new per-system editor.
+      function migrateSystemProfiles() {
+        const settings = state.settings;
+        if (!settings || settings.systemProfilesMigrated) return;
+        settings.systemProfiles = settings.systemProfiles || {};
+        const std = { ...(DEFAULT_SETTINGS.systemProfiles["standard-salt"]), ...(settings.systemProfiles["standard-salt"] || {}) };
+        if (settings.targetPh) std.pH = settings.targetPh;
+        if (settings.targetChlorine) std.chlorine = settings.targetChlorine;
+        if (settings.targetAlkalinity) std.alkalinity = settings.targetAlkalinity;
+        if (settings.maxAcid) std.maxAcid = settings.maxAcid;
+        settings.systemProfiles["standard-salt"] = std;
+        settings.systemProfiles["freshwater-mineral"] = { ...(DEFAULT_SETTINGS.systemProfiles["freshwater-mineral"]), ...(settings.systemProfiles["freshwater-mineral"] || {}) };
+        settings.defaultSystemType = settings.defaultSystemType || DEFAULT_SYSTEM_TYPE;
+        settings.systemProfilesMigrated = true;
+      }
 
       const CHEMICAL_ALIASES = {
         chlorine: ["chlorine", "liquid chlorine", "liquid chlor", "sodium hypochlorite"],
@@ -2904,6 +3044,20 @@
           targetChlorine: row.target_chlorine || DEFAULT_SETTINGS.targetChlorine,
           targetAlkalinity: row.target_alkalinity || DEFAULT_SETTINGS.targetAlkalinity,
           maxAcid: row.max_acid_ml || DEFAULT_SETTINGS.maxAcid,
+          // System profiles aren't a DB column yet — carry them from current state (localStorage),
+          // keeping the standard-salt core in sync with the row's flat targets.
+          defaultSystemType: state.settings.defaultSystemType || DEFAULT_SYSTEM_TYPE,
+          systemProfiles: {
+            ...(state.settings.systemProfiles || DEFAULT_SETTINGS.systemProfiles),
+            "standard-salt": {
+              ...((state.settings.systemProfiles || DEFAULT_SETTINGS.systemProfiles)["standard-salt"]),
+              pH: row.target_ph || DEFAULT_SETTINGS.systemProfiles["standard-salt"].pH,
+              chlorine: row.target_chlorine || DEFAULT_SETTINGS.systemProfiles["standard-salt"].chlorine,
+              alkalinity: row.target_alkalinity || DEFAULT_SETTINGS.systemProfiles["standard-salt"].alkalinity,
+              maxAcid: row.max_acid_ml || DEFAULT_SETTINGS.systemProfiles["standard-salt"].maxAcid
+            }
+          },
+          systemProfilesMigrated: true,
           companyProcedures: row.company_procedures || DEFAULT_SETTINGS.companyProcedures,
           vehicleStock: row.vehicle_stock || DEFAULT_SETTINGS.vehicleStock,
           companyKnowledge: row.company_knowledge || DEFAULT_SETTINGS.companyKnowledge,
@@ -3327,6 +3481,7 @@
           id: createId(),
           title: "New pool service chat",
           createdAt: new Date().toISOString(),
+          systemType: DEFAULT_SYSTEM_TYPE,
           messages: []
         };
       }
@@ -5092,7 +5247,16 @@
         ].join("\n")).join("\n\n");
       }
 
+      // Lift a leading "SUMMARY: ..." action line out of a chemical answer so it can be
+      // shown as a highlighted "Do this" chip above the explanation.
+      function extractActionSummary(text) {
+        const match = String(text || "").match(/^\s*SUMMARY:\s*(.+?)(?:\n|$)/i);
+        if (!match) return { summary: "", body: String(text || "") };
+        return { summary: match[1].trim(), body: String(text).slice(match[0].length).replace(/^\s+/, "") };
+      }
+
       function cleanAssistantText(text) {
+        text = String(text).replace(/^\s*SUMMARY:\s*/i, "");
         return String(text)
           .replace(/^#{1,6}\s+/gm, "")
           .replace(/\*\*(.*?)\*\*/g, "$1")
@@ -5401,11 +5565,13 @@
           return;
         }
 
-        els.messages.innerHTML = chat.messages.map((message, index) => `
+        els.messages.innerHTML = chat.messages.map((message, index) => {
+          const parsed = message.role === "assistant" ? extractActionSummary(message.content) : { summary: "", body: message.content };
+          return `
           <article class="message ${message.role}">
             <div class="role">${message.role === "user" ? "Technician" : "Pool Pal"}</div>
             ${message.role === "assistant" ? renderManufacturerReference(message.manualReference) : ""}
-            <div class="bubble">${renderMessagePhotos(message.images)}${renderMessageText(message.content)}</div>
+            <div class="bubble">${renderMessagePhotos(message.images)}${parsed.summary ? `<div class="action-summary"><span class="action-summary-label">✅ Do this</span><span class="action-summary-text">${escapeHtml(parsed.summary)}</span></div>` : ""}${renderMessageText(parsed.body)}</div>
             ${message.role === "assistant" ? `
               <div class="message-tools">
                 <button class="tool-button" type="button" data-copy-answer="${index}" title="Copy answer">📋 Copy Answer</button>
@@ -5415,7 +5581,8 @@
               </div>
             ` : ""}
           </article>
-        `).join("");
+        `;
+        }).join("");
         bindMessageTools();
         els.messages.scrollTop = els.messages.scrollHeight;
       }
@@ -5461,8 +5628,26 @@
 
       function renderAll() {
         renderConversations();
+        renderChatSystemPicker();
         renderMessages();
         renderKnowledgeButton();
+      }
+
+      function renderChatSystemPicker() {
+        const select = document.querySelector("#chatSystemType");
+        if (!select) return;
+        const chat = activeConversation();
+        const current = chat?.systemType || DEFAULT_SYSTEM_TYPE;
+        select.innerHTML = Object.entries(SYSTEM_PROFILES)
+          .map(([key, profile]) => `<option value="${key}" ${key === current ? "selected" : ""}>${escapeHtml(profile.label)}</option>`)
+          .join("");
+      }
+
+      function setChatSystemType(systemType) {
+        const chat = activeConversation();
+        if (!chat || !SYSTEM_PROFILES[systemType]) return;
+        chat.systemType = systemType;
+        saveState();
       }
 
       function showSetupNudge() {
@@ -5590,6 +5775,7 @@
       function newChat() {
         if (!requireCloudLogin()) return;
         const chat = createConversation();
+        chat.systemType = state.settings?.defaultSystemType || DEFAULT_SYSTEM_TYPE;
         state.conversations.unshift(chat);
         state.activeId = chat.id;
         saveState();
@@ -5632,14 +5818,21 @@
       }
 
       function buildContext(question = "", manualReference = manualRetrievalForQuestion(question)) {
+        const chat = activeConversation();
+        const sys = resolveSystemTargets(chat?.systemType, state.settings);
         return {
           responseStyle: state.settings.responseStyle,
           assistantName: limitText(state.settings.assistantName || DEFAULT_SETTINGS.assistantName, 40),
+          systemType: sys.systemType,
+          systemChemistryNote: sys.chemistryNote,
           targets: {
-            pH: state.settings.targetPh,
-            chlorine: state.settings.targetChlorine,
-            alkalinity: state.settings.targetAlkalinity,
-            maxAcidMl: state.settings.maxAcid
+            pH: sys.pH,
+            chlorine: sys.chlorine,
+            alkalinity: sys.alkalinity,
+            maxAcidMl: sys.maxAcidMl,
+            salt: sys.salt,
+            tds: sys.tds,
+            mineral: sys.mineral
           },
           companyProcedures: limitText(state.settings.companyProcedures, MAX_CONTEXT_CHARS.companyProcedures),
           companyKnowledge: limitText(state.settings.companyKnowledge, MAX_CONTEXT_CHARS.companyKnowledge),
@@ -5904,15 +6097,60 @@
         showWelcomeIfNeeded();
       }
 
+      let settingsProfileDraft = null;
+
+      function initSystemTargetEditor() {
+        // A working copy of every profile so switching systems mid-edit doesn't lose changes.
+        settingsProfileDraft = {};
+        Object.keys(SYSTEM_PROFILES).forEach((key) => {
+          settingsProfileDraft[key] = { ...profileValues(key, state.settings) };
+        });
+        const options = Object.entries(SYSTEM_PROFILES)
+          .map(([key, profile]) => `<option value="${key}">${escapeHtml(profile.label)}</option>`).join("");
+        const defaultSel = document.querySelector("#defaultSystemType");
+        const editSel = document.querySelector("#editSystemType");
+        if (defaultSel) {
+          defaultSel.innerHTML = options;
+          defaultSel.value = SYSTEM_PROFILES[state.settings.defaultSystemType] ? state.settings.defaultSystemType : DEFAULT_SYSTEM_TYPE;
+        }
+        if (editSel) {
+          editSel.innerHTML = options;
+          editSel.value = defaultSel?.value || DEFAULT_SYSTEM_TYPE;
+        }
+        renderSystemTargetEditor();
+      }
+
+      function renderSystemTargetEditor() {
+        const container = document.querySelector("#systemTargetFields");
+        const editSel = document.querySelector("#editSystemType");
+        if (!container || !editSel || !settingsProfileDraft) return;
+        const type = SYSTEM_PROFILES[editSel.value] ? editSel.value : DEFAULT_SYSTEM_TYPE;
+        const draft = settingsProfileDraft[type] || (settingsProfileDraft[type] = { ...profileValues(type, state.settings) });
+        const fields = SYSTEM_PROFILES[type].fields;
+        const canEdit = isAdmin();
+        container.innerHTML = SYSTEM_TARGET_FIELDS
+          .filter((field) => fields.includes(field.key))
+          .map((field) => `<label>${escapeHtml(field.label)}<input type="text" data-sysfield="${field.key}" value="${escapeHtml(draft[field.key] || "")}" ${canEdit ? "" : "disabled"}></label>`)
+          .join("");
+        container.querySelectorAll("[data-sysfield]").forEach((input) => {
+          input.addEventListener("input", () => { draft[input.dataset.sysfield] = input.value; });
+        });
+      }
+
+      function commitSystemTargetDraft() {
+        const result = {};
+        Object.keys(SYSTEM_PROFILES).forEach((key) => {
+          result[key] = { ...profileValues(key, state.settings), ...(settingsProfileDraft?.[key] || {}) };
+        });
+        return result;
+      }
+
       function openSettings() {
         if (!requireCloudLogin()) return;
         document.querySelector("#modelSelect").value = state.settings.model;
         document.querySelector("#responseStyle").value = state.settings.responseStyle;
         document.querySelector("#assistantName").value = state.settings.assistantName || DEFAULT_SETTINGS.assistantName;
-        document.querySelector("#targetPh").value = state.settings.targetPh;
-        document.querySelector("#targetChlorine").value = state.settings.targetChlorine;
-        document.querySelector("#targetAlkalinity").value = state.settings.targetAlkalinity;
-        document.querySelector("#maxAcid").value = state.settings.maxAcid;
+        initSystemTargetEditor();
         document.querySelector("#messageTone").value = state.settings.messageTone || DEFAULT_SETTINGS.messageTone;
         document.querySelector("#messageGreeting").value = state.settings.messageGreeting || DEFAULT_SETTINGS.messageGreeting;
         document.querySelector("#messageSignoff").value = state.settings.messageSignoff || DEFAULT_SETTINGS.messageSignoff;
@@ -5937,10 +6175,14 @@
           model: normaliseModel(document.querySelector("#modelSelect").value),
           responseStyle: normaliseResponseStyle(document.querySelector("#responseStyle").value),
           assistantName: document.querySelector("#assistantName").value.trim() || DEFAULT_SETTINGS.assistantName,
-          targetPh: document.querySelector("#targetPh").value,
-          targetChlorine: document.querySelector("#targetChlorine").value,
-          targetAlkalinity: document.querySelector("#targetAlkalinity").value,
-          maxAcid: document.querySelector("#maxAcid").value,
+          defaultSystemType: SYSTEM_PROFILES[document.querySelector("#defaultSystemType")?.value] ? document.querySelector("#defaultSystemType").value : DEFAULT_SYSTEM_TYPE,
+          systemProfiles: commitSystemTargetDraft(),
+          systemProfilesMigrated: true,
+          // mirror the standard-salt core onto the legacy flat targets so cloud sync stays coherent
+          targetPh: settingsProfileDraft?.["standard-salt"]?.pH ?? state.settings.targetPh,
+          targetChlorine: settingsProfileDraft?.["standard-salt"]?.chlorine ?? state.settings.targetChlorine,
+          targetAlkalinity: settingsProfileDraft?.["standard-salt"]?.alkalinity ?? state.settings.targetAlkalinity,
+          maxAcid: settingsProfileDraft?.["standard-salt"]?.maxAcid ?? state.settings.maxAcid,
           companyProcedures: state.settings.companyProcedures,
           vehicleStock: state.settings.vehicleStock,
           companyKnowledge: state.settings.companyKnowledge,
@@ -6281,8 +6523,8 @@
       }
 
       const SETTINGS_FIELD_IDS = [
-        "modelSelect", "responseStyle", "assistantName", "targetPh", "targetChlorine", "targetAlkalinity",
-        "maxAcid", "messageTone", "messageGreeting", "messageSignoff", "messageTemplate"
+        "modelSelect", "responseStyle", "assistantName", "defaultSystemType", "editSystemType",
+        "messageTone", "messageGreeting", "messageSignoff", "messageTemplate"
       ];
 
       function applyRoleToUi() {
@@ -6726,6 +6968,8 @@
         addChatPhotos(event.target.files);
       });
 
+      document.querySelector("#chatSystemType")?.addEventListener("change", (event) => setChatSystemType(event.target.value));
+      document.querySelector("#editSystemType")?.addEventListener("change", renderSystemTargetEditor);
       document.querySelector("#newChatButton").addEventListener("click", newChat);
       document.querySelector("#desktopNewChatButton").addEventListener("click", newChat);
       document.querySelector("#mobileNewChatButton").addEventListener("click", newChat);
@@ -6831,6 +7075,7 @@
 
       setupVoice();
       migrateCompanyProceduresToEntries();
+      migrateSystemProfiles();
       renderAll();
       initialiseAccess();
       initialiseCloud();
