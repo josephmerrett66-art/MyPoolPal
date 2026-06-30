@@ -559,8 +559,7 @@
         display: flex;
         align-items: center;
         gap: 10px;
-        padding: 8px clamp(16px, 4vw, 34px);
-        border-bottom: 1px solid var(--line);
+        padding: 0 clamp(16px, 4vw, 34px) 8px;
       }
 
       .chat-system-picker {
@@ -2232,17 +2231,16 @@
           <button class="secondary" id="desktopNewChatButton" type="button">New chat</button>
         </header>
 
-        <div class="chat-subbar">
-          <label class="chat-system-picker" title="Sanitiser system for this pool — sets the target levels Pool Pal aims for">
-            <span>System</span>
-            <select id="chatSystemType" aria-label="Sanitiser system for this pool"></select>
-          </label>
-          <span class="system-auto-hint" id="systemAutoHint" hidden></span>
-        </div>
-
         <main class="messages" id="messages" aria-live="polite"></main>
 
         <div class="composer-wrap">
+          <div class="chat-subbar">
+            <label class="chat-system-picker" title="Sanitiser system for this pool — sets the target levels Pool Pal aims for">
+              <span>System</span>
+              <select id="chatSystemType" aria-label="Sanitiser system for this pool"></select>
+            </label>
+            <span class="system-auto-hint" id="systemAutoHint" hidden></span>
+          </div>
           <form class="composer" id="composer">
             <button class="icon" id="voiceButton" type="button" title="Speak question" aria-label="Speak question">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -5857,7 +5855,24 @@
         saveState();
         renderAll();
         closeSidebar();
-        els.messageInput.focus();
+        // Don't auto-focus on touch devices — it pops the keyboard and hides the System selector.
+        const isTouch = window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+        if (!isTouch) els.messageInput.focus();
+      }
+
+      // On app launch, land on a fresh chat instead of the previous pool's conversation.
+      // Past chats stay in Recent; reuse an existing empty chat so launches don't pile up blanks.
+      function freshChatOnLaunch() {
+        const top = state.conversations[0];
+        if (top && (!top.messages || top.messages.length === 0)) {
+          state.activeId = top.id;
+          return;
+        }
+        const chat = createConversation();
+        chat.systemType = state.settings?.defaultSystemType || DEFAULT_SYSTEM_TYPE;
+        state.conversations.unshift(chat);
+        state.activeId = chat.id;
+        saveState();
       }
 
       function renameConversation(id) {
@@ -7253,6 +7268,7 @@
       setupVoice();
       migrateCompanyProceduresToEntries();
       migrateSystemProfiles();
+      freshChatOnLaunch();
       renderAll();
       initialiseAccess();
       initialiseCloud();
